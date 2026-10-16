@@ -1,6 +1,7 @@
 /**
- * DPDP Form Auditor - Application Controller
- * Connects the UI to DPDPAuditor engine and handles interactivity.
+ * FormSentry - Privacy Investigation Lab Application Controller
+ * Connects DPDPAuditor core engine with Three.js 3D visualization,
+ * Privacy Surgery before/after workspace, Evidence Dossier, and Consent Studio.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,21 +10,33 @@ document.addEventListener('DOMContentLoaded', () => {
   // Instantiate Core Engine
   const auditor = new DPDPAuditor();
 
-  // State
-  let currentAuditReport = null;
+  // App State
+  let currentReport = null;
   let activeLanguage = 'en';
-  let activeFilter = 'all';
+  let activeTableFilter = 'all';
   let currentInputMode = 'html'; // 'html' or 'list'
+  let currentMockKey = 'newsletter';
 
-  // DOM Elements
+  // Privacy Surgery User Overrides State (Separated from Engine Recommendations)
+  // Overrides map: { [fieldIdentifier]: 'keep' | 'optional' | 'remove' }
+  const userSurgeryOverrides = {};
+
+  // DOM Elements - Input Workspace
   const formInputEl = document.getElementById('form-input');
-  const formPurposeEl = document.getElementById('form-purpose');
-  const btnAuditEl = document.getElementById('btn-audit');
+  const formPurposeSelectEl = document.getElementById('form-purpose-select');
+  const customPurposeBoxEl = document.getElementById('custom-purpose-box');
+  const formCustomPurposeEl = document.getElementById('form-custom-purpose');
+  const inputStatsIndicatorEl = document.getElementById('input-stats-indicator');
+  const inputModeLabelEl = document.getElementById('input-mode-label');
   const chkLiveAuditEl = document.getElementById('chk-live-audit');
-  const inputStatsEl = document.getElementById('input-stats');
-  const inputHelperTextEl = document.getElementById('input-helper-text');
+  const btnAuditMainEl = document.getElementById('btn-audit-main');
+  const btnHeroAuditEl = document.getElementById('btn-hero-audit');
+  const btnClearAllEl = document.getElementById('btn-clear-all');
+  const btnResetAnalysisEl = document.getElementById('btn-reset-analysis');
+  const tabHtmlBtn = document.getElementById('tab-html');
+  const tabListBtn = document.getElementById('tab-list');
 
-  // Gauge & Score
+  // DOM Elements - Minimization Score & Stats
   const gaugeProgressEl = document.getElementById('gauge-progress');
   const gaugeScoreNumEl = document.getElementById('gauge-score-num');
   const scoreGradePillEl = document.getElementById('score-grade-pill');
@@ -31,160 +44,77 @@ document.addEventListener('DOMContentLoaded', () => {
   const scoreStatusTextEl = document.getElementById('score-status-text');
   const scoreExplanationTextEl = document.getElementById('score-explanation-text');
 
-  // Stats Counters
   const statTotalEl = document.getElementById('stat-total');
   const statPersonalEl = document.getElementById('stat-personal');
-  const statNeededEl = document.getElementById('stat-needed');
-  const statExcessEl = document.getElementById('stat-excess');
-  const categoryPillsContainerEl = document.getElementById('category-pills-container');
+  const statExcessiveEl = document.getElementById('stat-excessive');
+  const statProposedEl = document.getElementById('stat-proposed');
 
-  // Summary Table
-  const tableBodyEl = document.getElementById('audit-table-body');
-  const countAllEl = document.getElementById('count-all');
-  const countExcessEl = document.getElementById('count-excess');
-  const countNeededEl = document.getElementById('count-needed');
-  const countChildrenEl = document.getElementById('count-children');
+  // DOM Elements - Privacy Surgery (Part 12)
+  const surgeryKeepListEl = document.getElementById('surgery-keep-list');
+  const surgeryOptionalListEl = document.getElementById('surgery-optional-list');
+  const surgeryRemoveListEl = document.getElementById('surgery-remove-list');
+  const surgeryKeepCountEl = document.getElementById('surgery-keep-count');
+  const surgeryOptionalCountEl = document.getElementById('surgery-optional-count');
+  const surgeryRemoveCountEl = document.getElementById('surgery-remove-count');
+  const btnCopyMinimizedListEl = document.getElementById('btn-copy-minimized-list');
+  const btnCopyMinimizedHtmlEl = document.getElementById('btn-copy-minimized-html');
+  const btnResetSurgeryEl = document.getElementById('btn-reset-surgery');
 
-  // Notice & Language
-  const noticeContentEl = document.getElementById('notice-content');
+  // DOM Elements - Evidence Table (Part 15)
+  const findingsTableBodyEl = document.getElementById('findings-table-body');
+  const tableSearchInputEl = document.getElementById('table-search-input');
+  const fcountAllEl = document.getElementById('fcount-all');
+  const fcountPersonalEl = document.getElementById('fcount-personal');
+  const fcountExcessEl = document.getElementById('fcount-excess');
+  const fcountReviewEl = document.getElementById('fcount-review');
+
+  // DOM Elements - Consent Studio (Part 14)
+  const noticeEditorEl = document.getElementById('notice-editor');
   const btnCopyNoticeEl = document.getElementById('btn-copy-notice');
+  const noticeQualityListEl = document.getElementById('notice-quality-list');
   const langBtns = document.querySelectorAll('.lang-btn');
 
-  // Exports & Tests
-  const btnDownloadTxtEl = document.getElementById('btn-download-txt');
-  const btnPrintPdfEl = document.getElementById('btn-print-pdf');
-  const btnRunTestsEl = document.getElementById('btn-run-tests');
-  const testSuiteContainerEl = document.getElementById('test-suite-container');
-  const testResultsListEl = document.getElementById('test-results-list');
+  // DOM Elements - Evidence Dossier Modal (Part 10)
+  const dossierModalEl = document.getElementById('dossier-modal');
+  const btnCloseDossierEl = document.getElementById('btn-close-dossier');
+  const dossierFieldTitleEl = document.getElementById('dossier-field-title');
+  const dossierMetaSubtitleEl = document.getElementById('dossier-meta-subtitle');
+  const dossierEvidenceLevelEl = document.getElementById('dossier-evidence-level');
+  const dossierQ1DetectedEl = document.getElementById('dossier-q1-detected');
+  const dossierQ2WhyEl = document.getElementById('dossier-q2-why');
+  const dossierQ3ActionEl = document.getElementById('dossier-q3-action');
+  const dossierAltBoxEl = document.getElementById('dossier-alt-box');
+  const dossierAltBodyEl = document.getElementById('dossier-alt-body');
+
+  // DOM Elements - Test Suite & Exports
+  const btnHeroTestsEl = document.getElementById('btn-hero-tests');
+  const testSuitePanelEl = document.getElementById('test-suite-panel');
+  const testSuiteResultsListEl = document.getElementById('test-suite-results-list');
   const btnCloseTestsEl = document.getElementById('btn-close-tests');
+  const btnExportTxtEl = document.getElementById('btn-export-txt');
+  const btnExportPdfEl = document.getElementById('btn-export-pdf');
   const appToastEl = document.getElementById('app-toast');
   const toastMessageEl = document.getElementById('toast-message');
 
   // =========================================================================
-  // PRESET SCENARIOS FOR JUDGES
-  // Demonstrates real-world messy forms, odd field names, and strict excess flags
+  // INITIALIZE 3D VISUAL SCENES (Three.js with graceful fallback)
   // =========================================================================
-  const PRESETS = {
-    newsletter: {
-      mode: 'html',
-      purpose: 'newsletter signup',
-      content: `<form id="subscribe-form" action="/subscribe" method="POST">
-  <!-- Legitimate fields for newsletter -->
-  <input type="text" name="fname" placeholder="First Name (Optional)" />
-  <input type="email" name="user_email" required placeholder="name@domain.com" autocomplete="email" />
+  let heroScannerScene = null;
+  let fieldParticleSpace = null;
 
-  <!-- Invasive excess fields typical on Indian websites -->
-  <input type="tel" id="mob_no" name="mob_no" placeholder="Mobile Number" />
-  <input type="text" name="cust_pin" placeholder="PIN Code / Postal" />
-  <input type="text" id="usr_aadhaar_num" placeholder="Aadhaar / National ID" />
-  <input type="date" name="txt_dob" placeholder="Date of Birth" />
-
-  <!-- Operational non-personal fields -->
-  <input type="hidden" name="csrf_token" value="b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9" />
-  <button type="submit">Subscribe Now</button>
-</form>`
-    },
-
-    ecommerce: {
-      mode: 'html',
-      purpose: 'ecommerce checkout & delivery',
-      content: `<form id="checkout-form">
-  <!-- Needed shipping & identity data -->
-  <input type="text" name="full_name" placeholder="Full Name" required />
-  <input type="tel" name="contact_phone" id="user_phone" placeholder="Contact Mobile" required />
-  <input type="email" name="customer_email" placeholder="Order Updates Email" required />
-  <textarea name="shipping_address" placeholder="Delivery House / Street Address"></textarea>
-  <input type="text" name="cust_pin" placeholder="PIN Code" required />
-  <input type="text" name="credit_card_no" autocomplete="cc-number" placeholder="Card Number" />
-
-  <!-- Unjustified excess fields for an online store -->
-  <input type="text" name="religion" placeholder="Religion (Optional)" />
-  <input type="text" name="blood_group" placeholder="Blood Group" />
-  <input type="number" name="annual_income" placeholder="Annual Family Income" />
-  <input type="number" name="child_age" placeholder="Minor Child Age" />
-
-  <button type="submit">Place Order</button>
-</form>`
-    },
-
-    job: {
-      mode: 'html',
-      purpose: 'job application portal',
-      content: `<form id="career-portal-form">
-  <!-- Legitimate recruitment inputs -->
-  <input type="text" name="candidate_name" placeholder="Candidate Full Name" required />
-  <input type="email" name="email_id" placeholder="Work/Personal Email" required />
-  <input type="tel" name="mob_no" placeholder="Contact Phone Number" required />
-  <input type="file" name="resume_file" placeholder="Upload Resume / CV" />
-  <input type="text" name="education_degree" placeholder="Highest Degree" />
-  <input type="text" name="prev_company" placeholder="Current Employer" />
-
-  <!-- Excessive / invasive fields for pre-offer application -->
-  <input type="text" name="live_gps_loc" placeholder="Real-time GPS Telemetry" />
-  <input type="text" name="bank_account_no" placeholder="Bank Account Number" />
-  <input type="text" name="marital_status" placeholder="Marital Status" />
-  <input type="text" name="parents_aadhaar" placeholder="Parent Aadhaar Card" />
-
-  <button type="submit">Submit Application</button>
-</form>`
-    },
-
-    children: {
-      mode: 'html',
-      purpose: 'children school admission',
-      content: `<form id="school-admission">
-  <!-- DPDP Section 9 Children's Data & Mandatory Parental Consent -->
-  <input type="text" name="child_name" placeholder="Child / Student Full Name" required />
-  <input type="number" name="student_age" placeholder="Age (e.g. 10)" required />
-  <input type="text" name="grade_applying" placeholder="Standard / Class" />
-  <input type="text" name="guardian_name" placeholder="Parent or Legal Guardian Name" required />
-  <input type="tel" name="parent_mob_no" placeholder="Parent Mobile for OTP Consent" required />
-  <input type="email" name="parent_email" placeholder="Parent Email" required />
-  <input type="checkbox" name="parent_consent" required />
-
-  <!-- Prohibited / Excess for children under Section 9 -->
-  <input type="tel" name="child_phone" placeholder="Minor Child Personal Phone" />
-  <input type="file" name="biometric_iris_scan" placeholder="Iris / Biometric Scan" />
-
-  <button type="submit">Register Student</button>
-</form>`
-    },
-
-    healthcare: {
-      mode: 'html',
-      purpose: 'healthcare doctor appointment',
-      content: `<form id="telehealth-booking">
-  <!-- Legitimate clinical consultation data -->
-  <input type="text" name="patient_name" placeholder="Patient Full Name" required />
-  <input type="tel" name="user_phone" placeholder="Patient Phone" required />
-  <input type="number" name="patient_age" placeholder="Age" />
-  <input type="text" name="gender" placeholder="Gender" />
-  <textarea name="medical_symptoms" placeholder="Describe symptoms / complaints"></textarea>
-  <input type="text" name="blood_group" placeholder="Blood Group (e.g. O+)" />
-
-  <!-- Irrelevant excess data for a medical booking -->
-  <input type="text" name="voter_id" placeholder="Voter ID Card Number" />
-  <input type="number" name="annual_salary" placeholder="Annual CTC" />
-  <input type="text" name="curr_loc_ip" placeholder="Network IP Footprint" />
-
-  <button type="submit">Book Doctor Consultation</button>
-</form>`
-    },
-
-    clean: {
-      mode: 'html',
-      purpose: 'newsletter signup',
-      content: `<form id="minimal-newsletter">
-  <!-- DPDP Exemplary Compliant: Only Email collected -->
-  <input type="email" name="user_email" placeholder="Your Email Address" required autocomplete="email" />
-  <input type="hidden" name="_csrf" value="security_token_sample" />
-  <button type="submit">Get Weekly Updates</button>
-</form>`
+  try {
+    if (typeof FormSentry3D !== 'undefined') {
+      heroScannerScene = new FormSentry3D.HeroScannerScene('hero-grid-canvas');
+      fieldParticleSpace = new FormSentry3D.FieldParticleSpace('particle-space-canvas', (field) => {
+        openEvidenceDossier(field);
+      });
     }
-  };
+  } catch (err) {
+    console.warn("Three.js initialization notice (running fallback mode):", err);
+  }
 
   // =========================================================================
-  // TOAST HELPER
+  // TOAST NOTIFICATION HELPER
   // =========================================================================
   function showToast(msg) {
     toastMessageEl.textContent = msg;
@@ -195,232 +125,409 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // MAIN AUDIT TRIGGER
+  // PURPOSE RESOLUTION HELPER
   // =========================================================================
-  function runAudit() {
-    const rawInput = formInputEl.value.trim();
-    const purpose = formPurposeEl.value.trim() || 'newsletter signup';
-
-    if (!rawInput) {
-      inputStatsEl.textContent = '0 fields detected';
-      return;
+  function getDeclaredPurpose() {
+    const selectedVal = formPurposeSelectEl.value;
+    if (selectedVal === 'custom') {
+      return formCustomPurposeEl.value.trim() || 'Custom Business Purpose';
     }
-
-    // Run audit via engine
-    currentAuditReport = auditor.audit(rawInput, purpose);
-
-    // Update Field Count Indicator
-    inputStatsEl.textContent = `${currentAuditReport.fieldsCount} fields parsed`;
-
-    // Render components
-    renderScorecard(currentAuditReport.compliance);
-    renderStats(currentAuditReport);
-    renderCategoryPills(currentAuditReport.categoriesSummary);
-    renderSummaryTable(currentAuditReport.fields);
-    renderNotice(currentAuditReport);
+    return selectedVal;
   }
 
   // =========================================================================
-  // RENDER SCORECARD & SVG GAUGE
+  // MAIN AUDIT PIPELINE
   // =========================================================================
-  function renderScorecard(compliance) {
-    const score = compliance.score;
+  function runAudit() {
+    const rawInput = formInputEl.value.trim();
+    const purpose = getDeclaredPurpose();
+
+    if (!rawInput) {
+      inputStatsIndicatorEl.textContent = '0 fields detected';
+      renderEmptyState();
+      return;
+    }
+
+    // Trigger 3D scanner beam acceleration
+    if (heroScannerScene) {
+      heroScannerScene.startScan(800);
+    }
+
+    // Execute Deterministic Local Audit Engine
+    currentReport = auditor.audit(rawInput, purpose);
+
+    // Update field count
+    inputStatsIndicatorEl.textContent = `${currentReport.counts.total} fields parsed`;
+
+    // Render Components
+    renderScorecard(currentReport.score);
+    renderStats(currentReport.counts);
+    renderPrivacySurgery(currentReport);
+    renderFindingsTable(currentReport.fields);
+    renderConsentNotice(currentReport);
+    renderQuickDecisionsList(currentReport.fields);
+
+    // Update 3D Data-Particle Constellation
+    update3DParticles();
+  }
+
+  function renderQuickDecisionsList(fields) {
+    const listEl = document.getElementById('quick-decisions-list');
+    const countEl = document.getElementById('quick-decisions-count');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    if (!fields || fields.length === 0) {
+      listEl.innerHTML = '<div style="color:var(--text-dim); font-size:0.75rem; padding:0.5rem;">No fields analyzed.</div>';
+      if (countEl) countEl.textContent = '0 fields';
+      return;
+    }
+
+    if (countEl) countEl.textContent = `${fields.length} fields`;
+
+    fields.forEach(f => {
+      const row = document.createElement('div');
+      row.className = 'quick-decision-row';
+
+      let badgeHtml = '';
+      if (f.necessityStatus === 'Likely excessive') {
+        badgeHtml = `<span class="badge badge-excess" style="font-size:0.68rem; padding:0.12rem 0.45rem;">🔴 EXCESSIVE</span>`;
+      } else if (f.necessityStatus === 'Likely necessary') {
+        if (f.category === 'Non-Personal / Operational') {
+          badgeHtml = `<span class="badge badge-operational" style="font-size:0.68rem; padding:0.12rem 0.45rem;">⚪ OPERATIONAL</span>`;
+        } else {
+          badgeHtml = `<span class="badge badge-needed" style="font-size:0.68rem; padding:0.12rem 0.45rem;">✓ NECESSARY</span>`;
+        }
+      } else if (f.necessityStatus === 'Unknown — review required') {
+        badgeHtml = `<span class="badge badge-warn" style="font-size:0.68rem; padding:0.12rem 0.45rem;">⚠ REVIEW</span>`;
+      } else {
+        badgeHtml = `<span class="badge badge-operational" style="font-size:0.68rem; padding:0.12rem 0.45rem;">OPTIONAL</span>`;
+      }
+
+      row.innerHTML = `
+        <span class="quick-row-name">${escapeHtml(f.rawIdentifier)}</span>
+        <div>${badgeHtml}</div>
+      `;
+
+      row.addEventListener('click', () => {
+        openEvidenceDossier(f);
+      });
+
+      listEl.appendChild(row);
+    });
+  }
+
+  function renderEmptyState() {
+    statTotalEl.textContent = '0';
+    statPersonalEl.textContent = '0';
+    statExcessiveEl.textContent = '0';
+    statProposedEl.textContent = '0';
+    renderQuickDecisionsList([]);
+    findingsTableBodyEl.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-dim);">No form input detected. Enter field names or paste HTML above.</td></tr>`;
+    surgeryKeepListEl.innerHTML = `<div style="color:var(--text-dim); font-size:0.76rem;">No fields.</div>`;
+    surgeryOptionalListEl.innerHTML = `<div style="color:var(--text-dim); font-size:0.76rem;">No fields.</div>`;
+    surgeryRemoveListEl.innerHTML = `<div style="color:var(--text-dim); font-size:0.76rem;">No fields.</div>`;
+    surgeryRemoveListEl.innerHTML = `<div style="color:var(--text-dim); font-size:0.76rem;">No fields.</div>`;
+    if (fieldParticleSpace) {
+      fieldParticleSpace.updateFields([], new Set());
+    }
+  }
+
+  // =========================================================================
+  // RENDER MINIMIZATION SCORECARD & SVG GAUGE (Part 16)
+  // =========================================================================
+  function renderScorecard(scoreObj) {
+    const score = scoreObj.score;
     const circumference = 2 * Math.PI * 45; // ~282.74
     const offset = circumference - (score / 100) * circumference;
 
     gaugeProgressEl.style.strokeDashoffset = offset;
     gaugeScoreNumEl.textContent = score;
 
-    // Pick color scheme based on score
-    let strokeColor = '#ef4444'; // Red (Fail)
-    let badgeClass = 'badge-excess';
+    let color = '#f43f5e'; // Coral (Fail)
+    if (score >= 90) color = '#10e871'; // Lime
+    else if (score >= 70) color = '#f59e0b'; // Amber
+    else if (score >= 45) color = '#fb923c'; // Orange
 
-    if (score >= 90) {
-      strokeColor = '#10b981'; // Emerald
-      badgeClass = 'badge-needed';
-    } else if (score >= 70) {
-      strokeColor = '#f59e0b'; // Amber
-      badgeClass = 'badge-operational';
-    } else if (score >= 45) {
-      strokeColor = '#f97316'; // Orange
-      badgeClass = 'badge-excess';
-    }
+    gaugeProgressEl.style.stroke = color;
+    gaugeScoreNumEl.style.color = color;
 
-    gaugeProgressEl.style.stroke = strokeColor;
-    gaugeScoreNumEl.style.color = strokeColor;
+    scoreGradePillEl.textContent = `Grade ${scoreObj.grade}`;
+    scoreGradePillEl.style.backgroundColor = color;
 
-    scoreGradePillEl.textContent = `Grade ${compliance.grade}`;
-    scoreGradePillEl.className = `badge ${badgeClass}`;
+    scoreStatusBadgeEl.textContent = scoreObj.grade;
+    scoreStatusBadgeEl.style.backgroundColor = color;
 
-    scoreStatusBadgeEl.textContent = compliance.grade;
-    scoreStatusBadgeEl.style.backgroundColor = strokeColor;
+    scoreStatusTextEl.textContent = scoreObj.status;
+    scoreExplanationTextEl.textContent = scoreObj.explanation;
+  }
 
-    scoreStatusTextEl.textContent = compliance.status;
-    scoreExplanationTextEl.textContent = compliance.explanation;
+  function renderStats(counts) {
+    statTotalEl.textContent = counts.total;
+    statPersonalEl.textContent = counts.personal;
+    statExcessiveEl.textContent = counts.excessive;
+    statProposedEl.textContent = counts.proposedRemaining;
+
+    // Filter counts
+    fcountAllEl.textContent = counts.total;
+    fcountPersonalEl.textContent = counts.personal;
+    fcountExcessEl.textContent = counts.excessive;
+    fcountReviewEl.textContent = counts.optional;
   }
 
   // =========================================================================
-  // RENDER STATS COUNTERS
+  // RENDER PRIVACY SURGERY WORKSPACE (Part 12)
+  // Handles KEEP, OPTIONAL, REMOVE groups and user overrides
   // =========================================================================
-  function renderStats(report) {
-    statTotalEl.textContent = report.fieldsCount;
-    statPersonalEl.textContent = report.personalCount;
-    statNeededEl.textContent = report.neededCount;
-    statExcessEl.textContent = report.excessCount;
+  function renderPrivacySurgery(report) {
+    surgeryKeepListEl.innerHTML = '';
+    surgeryOptionalListEl.innerHTML = '';
+    surgeryRemoveListEl.innerHTML = '';
 
-    // Table filter counts
-    countAllEl.textContent = report.fieldsCount;
-    countExcessEl.textContent = report.excessCount;
-    countNeededEl.textContent = report.neededCount;
-
-    const childrenCount = report.fields.filter(f => f.category === DPDPAuditor.CATEGORIES.CHILDREN).length;
-    countChildrenEl.textContent = childrenCount;
-  }
-
-  // =========================================================================
-  // RENDER CATEGORY DISTRIBUTION PILLS
-  // =========================================================================
-  function renderCategoryPills(categoriesSummary) {
-    categoryPillsContainerEl.innerHTML = '';
-
-    const catColorMap = {
-      'Identity': '#38bdf8',
-      'Contact': '#34d399',
-      'Financial': '#fbbf24',
-      'Health': '#f43f5e',
-      'Location': '#a855f7',
-      "Children's Data": '#ec4899',
-      'Non-Personal / Technical': '#94a3b8'
+    const effectiveGroups = {
+      keep: [],
+      optional: [],
+      remove: []
     };
 
-    let totalRendered = 0;
+    report.fields.forEach(field => {
+      // Check if user has overridden this field
+      let effectiveGroup = userSurgeryOverrides[field.rawIdentifier];
 
-    for (const [catName, count] of Object.entries(categoriesSummary)) {
-      if (count > 0) {
-        totalRendered++;
-        const pill = document.createElement('div');
-        pill.className = 'cat-pill';
-        const color = catColorMap[catName] || '#94a3b8';
-        pill.innerHTML = `
-          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${color};"></span>
-          <span>${catName}</span>
-          <span class="cat-count">${count}</span>
-        `;
-        categoryPillsContainerEl.appendChild(pill);
+      if (!effectiveGroup) {
+        // Fall back to engine recommendations
+        if (field.necessityStatus === 'Likely necessary') {
+          effectiveGroup = 'keep';
+        } else if (field.necessityStatus === 'Likely excessive') {
+          effectiveGroup = 'remove';
+        } else {
+          effectiveGroup = 'optional';
+        }
       }
+
+      effectiveGroups[effectiveGroup].push(field);
+    });
+
+    // Update Counts
+    surgeryKeepCountEl.textContent = effectiveGroups.keep.length;
+    surgeryOptionalCountEl.textContent = effectiveGroups.optional.length;
+    surgeryRemoveCountEl.textContent = effectiveGroups.remove.length;
+
+    // Populate Columns
+    effectiveGroups.keep.forEach(field => {
+      surgeryKeepListEl.appendChild(createSurgeryCard(field, 'keep'));
+    });
+    effectiveGroups.optional.forEach(field => {
+      surgeryOptionalListEl.appendChild(createSurgeryCard(field, 'optional'));
+    });
+    effectiveGroups.remove.forEach(field => {
+      surgeryRemoveListEl.appendChild(createSurgeryCard(field, 'remove'));
+    });
+  }
+
+  function createSurgeryCard(field, currentGroup) {
+    const card = document.createElement('div');
+    card.className = 'surgery-card';
+
+    const isOverridden = !!userSurgeryOverrides[field.rawIdentifier];
+    const overrideBadge = isOverridden
+      ? `<span style="font-size:0.65rem; color:#f59e0b; font-family:var(--font-mono);">(Override)</span>`
+      : '';
+
+    let actionButtons = '';
+    if (currentGroup === 'remove') {
+      actionButtons = `
+        <button class="surgery-btn btn-restore" title="Restore field to minimized form">Restore</button>
+        <button class="surgery-btn btn-inspect" title="Inspect Evidence Dossier">Inspect</button>
+      `;
+    } else if (currentGroup === 'keep') {
+      actionButtons = `
+        <button class="surgery-btn btn-opt" title="Make field optional">Optional</button>
+        <button class="surgery-btn btn-remove" title="Remove field from form">Remove</button>
+        <button class="surgery-btn btn-inspect" title="Inspect Evidence Dossier">Inspect</button>
+      `;
+    } else {
+      actionButtons = `
+        <button class="surgery-btn btn-keep" title="Keep as required field">Keep</button>
+        <button class="surgery-btn btn-remove" title="Remove field from form">Remove</button>
+        <button class="surgery-btn btn-inspect" title="Inspect Evidence Dossier">Inspect</button>
+      `;
     }
 
-    if (totalRendered === 0) {
-      categoryPillsContainerEl.innerHTML = '<span style="font-size:0.8rem; color:var(--text-dim);">No personal data detected.</span>';
+    card.innerHTML = `
+      <div class="surgery-card-top">
+        <span class="surgery-field-name">${escapeHtml(field.rawIdentifier)} ${overrideBadge}</span>
+        <div class="surgery-actions">
+          ${actionButtons}
+        </div>
+      </div>
+      <div class="surgery-reason">${escapeHtml(field.whyUnnecessary || field.whatDetected)}</div>
+    `;
+
+    // Event Listeners for Surgery Buttons
+    const btnRestore = card.querySelector('.btn-restore');
+    if (btnRestore) {
+      btnRestore.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userSurgeryOverrides[field.rawIdentifier] = 'keep';
+        renderPrivacySurgery(currentReport);
+        update3DParticles();
+        showToast(`Restored "${field.rawIdentifier}" to proposed form.`);
+      });
     }
+
+    const btnRemove = card.querySelector('.btn-remove');
+    if (btnRemove) {
+      btnRemove.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userSurgeryOverrides[field.rawIdentifier] = 'remove';
+        renderPrivacySurgery(currentReport);
+        update3DParticles();
+        showToast(`Marked "${field.rawIdentifier}" for removal.`);
+      });
+    }
+
+    const btnOpt = card.querySelector('.btn-opt');
+    if (btnOpt) {
+      btnOpt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userSurgeryOverrides[field.rawIdentifier] = 'optional';
+        renderPrivacySurgery(currentReport);
+        update3DParticles();
+        showToast(`Marked "${field.rawIdentifier}" as optional.`);
+      });
+    }
+
+    const btnKeep = card.querySelector('.btn-keep');
+    if (btnKeep) {
+      btnKeep.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userSurgeryOverrides[field.rawIdentifier] = 'keep';
+        renderPrivacySurgery(currentReport);
+        update3DParticles();
+        showToast(`Marked "${field.rawIdentifier}" as required.`);
+      });
+    }
+
+    const btnInspect = card.querySelector('.btn-inspect');
+    if (btnInspect) {
+      btnInspect.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEvidenceDossier(field);
+      });
+    }
+
+    return card;
+  }
+
+  function update3DParticles() {
+    if (!fieldParticleSpace || !currentReport) return;
+
+    // Collect currently removed fields
+    const removedNames = new Set();
+    currentReport.fields.forEach(f => {
+      const override = userSurgeryOverrides[f.rawIdentifier];
+      if (override === 'remove' || (!override && f.necessityStatus === 'Likely excessive')) {
+        removedNames.add(f.rawIdentifier);
+      }
+    });
+
+    fieldParticleSpace.updateFields(currentReport.fields, removedNames);
   }
 
   // =========================================================================
-  // RENDER SUMMARY TABLE
+  // RENDER EVIDENCE WALL & FINDINGS TABLE (Part 15)
   // =========================================================================
-  function renderSummaryTable(fields) {
-    tableBodyEl.innerHTML = '';
+  function renderFindingsTable(fields) {
+    findingsTableBodyEl.innerHTML = '';
+    const searchTerm = (tableSearchInputEl.value || '').toLowerCase().trim();
 
-    if (!fields || fields.length === 0) {
-      tableBodyEl.innerHTML = `
-        <tr>
-          <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-dim);">
-            No fields detected. Paste an HTML form or enter a list of field names above.
-          </td>
-        </tr>
-      `;
-      return;
-    }
+    const filtered = fields.filter(field => {
+      // Filter by category / status
+      if (activeTableFilter === 'personal' && field.assessment !== 'Likely personal data') return false;
+      if (activeTableFilter === 'excess' && field.necessityStatus !== 'Likely excessive') return false;
+      if (activeTableFilter === 'review' && (field.necessityStatus !== 'Potentially necessary — justification needed' && field.necessityStatus !== 'Unknown — review required')) return false;
 
-    // Filter fields based on activeFilter
-    const filteredFields = fields.filter(field => {
-      if (activeFilter === 'all') return true;
-      if (activeFilter === 'excess') return field.isExcess;
-      if (activeFilter === 'needed') return !field.isExcess && field.isPersonal;
-      if (activeFilter === 'children') return field.category === DPDPAuditor.CATEGORIES.CHILDREN;
+      // Filter by search query
+      if (searchTerm) {
+        const text = `${field.rawIdentifier} ${field.category} ${field.necessityStatus} ${field.recommendedAction}`.toLowerCase();
+        if (!text.includes(searchTerm)) return false;
+      }
+
       return true;
     });
 
-    if (filteredFields.length === 0) {
-      tableBodyEl.innerHTML = `
-        <tr>
-          <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-dim);">
-            No fields match the selected filter "${activeFilter}".
-          </td>
-        </tr>
-      `;
+    if (filtered.length === 0) {
+      findingsTableBodyEl.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:var(--text-dim);">No fields match current filter.</td></tr>`;
       return;
     }
 
-    filteredFields.forEach(field => {
+    filtered.forEach(field => {
       const tr = document.createElement('tr');
-      if (field.isExcess) {
+      if (field.necessityStatus === 'Likely excessive') {
         tr.className = 'row-excess';
       }
 
-      // 1. Field Identifier & Source Type
-      const tdIdentifier = document.createElement('td');
-      tdIdentifier.innerHTML = `
+      // 1. Identifier
+      const tdId = document.createElement('td');
+      tdId.innerHTML = `
         <span class="field-chip">${escapeHtml(field.rawIdentifier)}</span>
         <div class="field-type-tag">type: ${escapeHtml(field.type || 'text')}${field.required ? ' &bull; required' : ''}</div>
       `;
 
-      // 2. Personal Data? (Yes / No)
-      const tdPersonal = document.createElement('td');
-      if (field.isPersonal) {
-        tdPersonal.innerHTML = `<span style="color:#38bdf8; font-weight:700;">Yes</span>`;
-      } else {
-        tdPersonal.innerHTML = `<span style="color:var(--text-dim);">No</span>`;
-      }
+      // 2. Assessment
+      const tdAssess = document.createElement('td');
+      let assessColor = '#94a3b8';
+      if (field.assessment === 'Likely personal data') assessColor = '#38bdf8';
+      else if (field.assessment === 'Needs review') assessColor = '#f59e0b';
+      tdAssess.innerHTML = `<span style="color:${assessColor}; font-weight:600; font-size:0.78rem;">${escapeHtml(field.assessment)}</span>`;
 
       // 3. Category Badge
-      const tdCategory = document.createElement('td');
-      const catClass = getCategoryBadgeClass(field.category);
-      tdCategory.innerHTML = `<span class="badge-cat ${catClass}">${escapeHtml(field.category)}</span>`;
+      const tdCat = document.createElement('td');
+      tdCat.innerHTML = `<span class="badge-cat ${getCategoryBadgeClass(field.category)}">${escapeHtml(field.category)}</span>`;
 
-      // 4. Necessity Status Badge
+      // 4. Necessity Status
       const tdStatus = document.createElement('td');
-      if (field.isExcess) {
-        tdStatus.innerHTML = `
-          <span class="badge badge-excess">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-            ${escapeHtml(field.necessityStatus)}
-          </span>
-        `;
-      } else if (field.isPersonal) {
-        tdStatus.innerHTML = `
-          <span class="badge badge-needed">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            ${escapeHtml(field.necessityStatus)}
-          </span>
-        `;
-      } else {
-        tdStatus.innerHTML = `
-          <span class="badge badge-operational">
-            ${escapeHtml(field.necessityStatus)}
-          </span>
-        `;
-      }
+      tdStatus.innerHTML = getStatusBadgeHtml(field.necessityStatus);
 
-      // 5. Compliance Reason & Legal Basis
+      // 5. Recommended Action & Reason
       const tdReason = document.createElement('td');
       tdReason.innerHTML = `
-        <div class="reason-text">
-          ${escapeHtml(field.reason)}
-          <div style="font-size:0.72rem; color:var(--text-dim); margin-top:0.25rem;">
-            Matched rule: ${escapeHtml(field.matchedRule || 'Keyword correlation')}
-          </div>
-        </div>
+        <div style="font-weight:600; font-size:0.8rem; color:#fff; margin-bottom:2px;">${escapeHtml(field.recommendedAction)}</div>
+        <div style="font-size:0.75rem; color:var(--text-muted); line-height:1.35;">${escapeHtml(field.whyUnnecessary)}</div>
       `;
 
-      tr.appendChild(tdIdentifier);
-      tr.appendChild(tdPersonal);
-      tr.appendChild(tdCategory);
+      // 6. Dossier Button
+      const tdAction = document.createElement('td');
+      tdAction.innerHTML = `<button class="btn btn-secondary btn-sm" style="font-size:0.72rem; padding:0.25rem 0.6rem;">Dossier</button>`;
+
+      tr.appendChild(tdId);
+      tr.appendChild(tdAssess);
+      tr.appendChild(tdCat);
       tr.appendChild(tdStatus);
       tr.appendChild(tdReason);
+      tr.appendChild(tdAction);
 
-      tableBodyEl.appendChild(tr);
+      // Click to open evidence dossier
+      tr.addEventListener('click', () => {
+        openEvidenceDossier(field);
+      });
+
+      findingsTableBodyEl.appendChild(tr);
     });
+  }
+
+  function getStatusBadgeHtml(status) {
+    if (status === 'Likely excessive') {
+      return `<span class="badge badge-excess"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Excessive</span>`;
+    }
+    if (status === 'Likely necessary') {
+      return `<span class="badge badge-needed"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Necessary</span>`;
+    }
+    if (status === 'Unknown — review required') {
+      return `<span class="badge badge-warn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Review</span>`;
+    }
+    return `<span class="badge badge-operational">Optional / Review</span>`;
   }
 
   function getCategoryBadgeClass(category) {
@@ -431,9 +538,407 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'Health': return 'badge-cat-health';
       case 'Location': return 'badge-cat-location';
       case "Children's Data": return 'badge-cat-children';
+      case 'Authentication & Security': return 'badge-cat-auth';
+      case 'User-Generated Content': return 'badge-cat-content';
+      case 'Unknown / Requiring Review': return 'badge-cat-unknown';
       default: return 'badge-cat-non-personal';
     }
   }
+
+  // =========================================================================
+  // PRIVACY DETECTIVE EVIDENCE DOSSIER MODAL (Part 10)
+  // =========================================================================
+  function openEvidenceDossier(field) {
+    dossierFieldTitleEl.textContent = field.rawIdentifier;
+    dossierMetaSubtitleEl.innerHTML = `Category: <strong>${field.category}</strong> &bull; Assessment: <strong>${field.assessment}</strong> &bull; Status: <strong>${field.necessityStatus}</strong>`;
+    dossierEvidenceLevelEl.textContent = field.evidenceStrength || 'High Evidence';
+
+    dossierQ1DetectedEl.textContent = field.whatDetected || `Matched alias: "${field.matchedAlias}" (${field.evidenceText})`;
+    dossierQ2WhyEl.textContent = field.whyUnnecessary || 'Evaluated under DPDP Section 6(1) purpose limitation principle.';
+    dossierQ3ActionEl.textContent = field.recommendedAction || 'Consider data minimization.';
+
+    if (field.alternative) {
+      dossierAltBoxEl.style.display = 'block';
+      dossierAltBodyEl.textContent = field.alternative;
+    } else {
+      dossierAltBoxEl.style.display = 'none';
+    }
+
+    dossierModalEl.style.display = 'flex';
+  }
+
+  btnCloseDossierEl.addEventListener('click', () => {
+    dossierModalEl.style.display = 'none';
+  });
+
+  dossierModalEl.addEventListener('click', (e) => {
+    if (e.target === dossierModalEl) {
+      dossierModalEl.style.display = 'none';
+    }
+  });
+
+  // =========================================================================
+  // CONSENT STUDIO & QUALITY CHECKLIST (Part 14)
+  // =========================================================================
+  function renderConsentNotice(report) {
+    if (!report || !report.consentNotices) return;
+    noticeEditorEl.value = report.consentNotices[activeLanguage] || report.consentNotices.en;
+    updateQualityChecklist(noticeEditorEl.value);
+  }
+
+  function updateQualityChecklist(noticeText) {
+    const checks = auditor.checkNoticeQuality(noticeText);
+    noticeQualityListEl.innerHTML = '';
+
+    checks.forEach(check => {
+      const item = document.createElement('div');
+      item.className = 'check-item';
+
+      let iconClass = check.passed ? 'check-icon-pass' : 'check-icon-fail';
+      let iconSvg = check.passed
+        ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`
+        : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+
+      if (check.warning) {
+        iconClass = 'check-icon-warn';
+        iconSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+      }
+
+      item.innerHTML = `
+        <span class="${iconClass}" style="flex-shrink:0; margin-top:2px;">${iconSvg}</span>
+        <div>
+          <div style="color:${check.passed ? '#e2e8f0' : '#fca5a5'}; font-weight:600;">${check.label}</div>
+          ${check.warning ? `<div style="font-size:0.72rem; color:#fde047; margin-top:2px;">${check.warning}</div>` : ''}
+        </div>
+      `;
+      noticeQualityListEl.appendChild(item);
+    });
+  }
+
+  noticeEditorEl.addEventListener('input', () => {
+    updateQualityChecklist(noticeEditorEl.value);
+  });
+
+  btnCopyNoticeEl.addEventListener('click', () => {
+    const text = noticeEditorEl.value;
+    if (!text) return;
+
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Draft consent notice copied to clipboard!');
+    }).catch(() => {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('Draft consent notice copied to clipboard!');
+    });
+  });
+
+  // Language Tabs
+  langBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      langBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeLanguage = btn.getAttribute('data-lang');
+      if (currentReport) {
+        renderConsentNotice(currentReport);
+      }
+    });
+  });
+
+  // =========================================================================
+  // SURGERY EXPORTS: COPY MINIMIZED FORM / HTML
+  // =========================================================================
+  btnCopyMinimizedListEl.addEventListener('click', () => {
+    if (!currentReport) return;
+    const kept = currentReport.fields
+      .filter(f => userSurgeryOverrides[f.rawIdentifier] !== 'remove' && (userSurgeryOverrides[f.rawIdentifier] === 'keep' || f.necessityStatus !== 'Likely excessive'))
+      .map(f => f.rawIdentifier);
+
+    const listText = kept.join(', ');
+    navigator.clipboard.writeText(listText).then(() => {
+      showToast(`Copied ${kept.length} minimized fields to clipboard!`);
+    });
+  });
+
+  btnCopyMinimizedHtmlEl.addEventListener('click', () => {
+    if (!currentReport) return;
+    const kept = currentReport.fields
+      .filter(f => userSurgeryOverrides[f.rawIdentifier] !== 'remove' && (userSurgeryOverrides[f.rawIdentifier] === 'keep' || f.necessityStatus !== 'Likely excessive'));
+
+    let html = `<!-- FormSentry Minimized Form (DPDP Section 6(1) Compliant) -->\n<form action="/submit" method="POST">\n`;
+    kept.forEach(f => {
+      const isReq = (userSurgeryOverrides[f.rawIdentifier] === 'keep' || f.necessityStatus === 'Likely necessary') ? ' required' : '';
+      const type = f.type || 'text';
+      html += `  <label for="${escapeHtml(f.normalizedName)}">${escapeHtml(f.rawIdentifier)}</label>\n`;
+      html += `  <input type="${escapeHtml(type)}" id="${escapeHtml(f.normalizedName)}" name="${escapeHtml(f.normalizedName)}"${isReq} />\n\n`;
+    });
+    html += `  <button type="submit">Submit</button>\n</form>`;
+
+    navigator.clipboard.writeText(html).then(() => {
+      showToast('Clean minimized HTML form copied to clipboard!');
+    });
+  });
+
+  btnResetSurgeryEl.addEventListener('click', () => {
+    // Clear user overrides
+    Object.keys(userSurgeryOverrides).forEach(key => delete userSurgeryOverrides[key]);
+    if (currentReport) {
+      renderPrivacySurgery(currentReport);
+      update3DParticles();
+    }
+    showToast('Reset proposed form to engine recommendations.');
+  });
+
+  // =========================================================================
+  // MOCK DEMONSTRATION CHIPS (Part 17)
+  // =========================================================================
+  document.querySelectorAll('.example-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.example-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const mockKey = btn.getAttribute('data-mock');
+      currentMockKey = mockKey;
+      const mock = DPDPAuditor.MOCK_EXAMPLES[mockKey];
+
+      if (mock) {
+        // Clear user overrides on new mock load
+        Object.keys(userSurgeryOverrides).forEach(key => delete userSurgeryOverrides[key]);
+
+        formPurposeSelectEl.value = mock.purpose;
+        customPurposeBoxEl.style.display = 'none';
+
+        if (currentInputMode === 'html') {
+          formInputEl.value = mock.html;
+        } else {
+          formInputEl.value = mock.input;
+        }
+
+        runAudit();
+      }
+    });
+  });
+
+  // =========================================================================
+  // INPUT MODE TABS: HTML VS LIST
+  // =========================================================================
+  tabHtmlBtn.addEventListener('click', () => {
+    tabHtmlBtn.classList.add('active');
+    tabListBtn.classList.remove('active');
+    currentInputMode = 'html';
+    inputModeLabelEl.textContent = 'Paste HTML Form Code:';
+    const mock = DPDPAuditor.MOCK_EXAMPLES[currentMockKey];
+    if (mock) {
+      formInputEl.value = mock.html;
+      runAudit();
+    }
+  });
+
+  tabListBtn.addEventListener('click', () => {
+    tabListBtn.classList.add('active');
+    tabHtmlBtn.classList.remove('active');
+    currentInputMode = 'list';
+    inputModeLabelEl.textContent = 'Enter Comma or Line-Separated Field Names:';
+    const mock = DPDPAuditor.MOCK_EXAMPLES[currentMockKey];
+    if (mock) {
+      formInputEl.value = mock.input;
+      runAudit();
+    }
+  });
+
+  // =========================================================================
+  // PURPOSE SELECTOR CHANGE
+  // =========================================================================
+  formPurposeSelectEl.addEventListener('change', () => {
+    if (formPurposeSelectEl.value === 'custom') {
+      customPurposeBoxEl.style.display = 'block';
+    } else {
+      customPurposeBoxEl.style.display = 'none';
+    }
+
+    if (chkLiveAuditEl.checked) {
+      runAudit();
+    }
+  });
+
+  formCustomPurposeEl.addEventListener('input', () => {
+    if (chkLiveAuditEl.checked) {
+      runAudit();
+    }
+  });
+
+  // =========================================================================
+  // MAIN AUDIT BUTTONS
+  // =========================================================================
+  btnAuditMainEl.addEventListener('click', () => {
+    runAudit();
+    if (currentReport) {
+      showToast(`Audit Complete: ${currentReport.counts.total} fields analyzed (${currentReport.counts.excessive} excessive)`);
+    }
+  });
+
+  btnHeroAuditEl.addEventListener('click', () => {
+    runAudit();
+    if (currentReport) {
+      showToast(`Audit Complete: ${currentReport.counts.total} fields analyzed (${currentReport.counts.excessive} excessive)`);
+      const target = document.querySelector('.grid-workspace');
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
+  formInputEl.addEventListener('input', () => {
+    if (chkLiveAuditEl.checked) {
+      runAudit();
+    }
+  });
+
+  btnClearAllEl.addEventListener('click', () => {
+    formInputEl.value = '';
+    renderEmptyState();
+    showToast('Input cleared.');
+  });
+
+  btnResetAnalysisEl.addEventListener('click', () => {
+    Object.keys(userSurgeryOverrides).forEach(key => delete userSurgeryOverrides[key]);
+    runAudit();
+    showToast('Analysis reset.');
+  });
+
+  // =========================================================================
+  // FINDINGS TABLE SEARCH & FILTERS
+  // =========================================================================
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeTableFilter = btn.getAttribute('data-filter');
+      if (currentReport) {
+        renderFindingsTable(currentReport.fields);
+      }
+    });
+  });
+
+  tableSearchInputEl.addEventListener('input', () => {
+    if (currentReport) {
+      renderFindingsTable(currentReport.fields);
+    }
+  });
+
+  // =========================================================================
+  // EXPORT TXT & PRINT PDF (Part 19)
+  // =========================================================================
+  btnExportTxtEl.addEventListener('click', () => {
+    if (!currentReport) runAudit();
+    const textContent = auditor.exportAsText(currentReport);
+
+    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `formsentry-audit-report-${Date.now()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast('Downloaded formsentry-audit-report.txt');
+  });
+
+  btnExportPdfEl.addEventListener('click', () => {
+    if (!currentReport) runAudit();
+    window.print();
+  });
+
+  // =========================================================================
+  // IN-BROWSER AUTOMATED MASTER TEST SUITE (Part 21)
+  // =========================================================================
+  btnHeroTestsEl.addEventListener('click', () => {
+    testSuitePanelEl.style.display = 'block';
+    testSuiteResultsListEl.innerHTML = '';
+
+    const testLogs = [];
+    function assertTest(condition, name) {
+      testLogs.push({ passed: Boolean(condition), name });
+    }
+
+    const tAuditor = new DPDPAuditor();
+
+    // Battery 1: Messy aliases
+    const b1 = tAuditor.audit('user_email, mob_no, mobileNumber, dob, aadhaar_no, addr, health_condition', 'newsletter signup');
+    assertTest(b1.fields.length === 7, 'Battery 1: Parsed all 7 messy field aliases');
+    assertTest(b1.fields.find(f => f.rawIdentifier === 'mob_no').isExcess, 'Battery 1: mob_no detected as Contact alias and flagged Excess');
+    assertTest(b1.fields.find(f => f.rawIdentifier === 'dob').isExcess, 'Battery 1: dob detected as Identity alias and flagged Excess');
+
+    // Battery 2: HTML parser
+    const b2Html = `<form><label for="e">Email</label><input type="email" id="e" name="user_email" autocomplete="email" required /></form>`;
+    const b2 = tAuditor.parseInput(b2Html);
+    assertTest(b2[0].autocomplete === 'email' && b2[0].label === 'Email', 'Battery 2: Extracted autocomplete and connected label via for= attribute');
+
+    // Battery 3: Dynamic purpose switching
+    const b3News = tAuditor.audit('student_dob, home_address', 'newsletter signup');
+    assertTest(b3News.fields.every(f => f.necessityStatus === 'Likely excessive'), 'Battery 3: student_dob and address are EXCESS for newsletter');
+    const b3School = tAuditor.audit('student_dob, home_address', 'school admission');
+    assertTest(b3School.fields.find(f => f.rawIdentifier === 'student_dob').necessityStatus === 'Likely necessary', 'Battery 3: student_dob dynamically recalculated as LIKELY NECESSARY for school admission');
+
+    // Battery 4: Privacy Detective 3 Questions
+    const b4 = tAuditor.audit('aadhaar_no', 'newsletter signup').fields[0];
+    assertTest(b4.whatDetected && b4.whyUnnecessary && b4.recommendedAction, 'Battery 4: Detective provides answers to all 3 core evidence questions');
+
+    // Battery 5: Privacy Surgery
+    const b5 = tAuditor.audit('user_email, full_name, dob', 'newsletter signup');
+    assertTest(b5.surgery.keep.length === 1 && b5.surgery.remove.length === 1, 'Battery 5: Surgery KEEP, OPTIONAL, and REMOVE groupings computed correctly');
+
+    // Battery 6: Consent Studio
+    const b6 = tAuditor.audit('user_email', 'newsletter signup');
+    assertTest(b6.consentNotices.en.includes('DRAFT CONSENT NOTICE') && b6.consentNotices.hi && b6.consentNotices.mr, 'Battery 6: Multi-lingual templates generated in EN, HI, MR');
+    assertTest(b6.noticeQuality.some(q => q.id === 'withdrawal' && q.passed), 'Battery 6: Consent Notice Quality Checklist verifies Section 6(4) withdrawal instructions');
+
+    // Battery 7: Unknown fields
+    const b7 = tAuditor.audit('x7_data', 'newsletter signup').fields[0];
+    assertTest(b7.assessment === 'Needs review' && b7.necessityStatus === 'Unknown — review required', 'Battery 7: Unknown field is flagged "Needs review" (not assumed non-personal)');
+
+    // Battery 8: Empty/Malformed input
+    assertTest(tAuditor.parseInput('').length === 0, 'Battery 8: Empty string handled safely');
+
+    // Battery 9: Export text
+    assertTest(tAuditor.exportAsText(b6).includes('FORMSENTRY'), 'Battery 9: Text dossier generated with FormSentry formatting');
+
+    // Battery 10: Mock examples
+    const b10 = tAuditor.audit(DPDPAuditor.MOCK_EXAMPLES.newsletter.input, 'newsletter signup');
+    assertTest(b10.counts.excessive >= 4, 'Battery 10: Mock Example A (Newsletter) flags excessive DOB, Aadhaar, address, and health');
+
+    let passedCount = 0;
+    testLogs.forEach(t => {
+      if (t.passed) passedCount++;
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.justifyContent = 'space-between';
+      row.style.alignItems = 'center';
+      row.style.padding = '0.45rem 0.75rem';
+      row.style.background = '#06090e';
+      row.style.borderRadius = '4px';
+      row.style.fontSize = '0.78rem';
+      row.style.fontFamily = 'var(--font-mono)';
+
+      row.innerHTML = `
+        <span style="color:#e2e8f0;">${escapeHtml(t.name)}</span>
+        <span style="color:${t.passed ? '#10e871' : '#f43f5e'}; font-weight:700;">
+          ${t.passed ? '✓ PASSED' : '✗ FAILED'}
+        </span>
+      `;
+      testSuiteResultsListEl.appendChild(row);
+    });
+
+    showToast(`Master Test Suite: ${passedCount}/${testLogs.length} assertions passed!`);
+  });
+
+  btnCloseTestsEl.addEventListener('click', () => {
+    testSuitePanelEl.style.display = 'none';
+  });
 
   function escapeHtml(str) {
     if (!str) return '';
@@ -446,247 +951,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // RENDER DRAFT CONSENT NOTICE
+  // INITIAL RUN: LOAD MOCK EXAMPLE A (NEWSLETTER)
   // =========================================================================
-  function renderNotice(report) {
-    if (!report || !report.consentNotices) return;
-    noticeContentEl.textContent = report.consentNotices[activeLanguage] || report.consentNotices.en;
-  }
-
-  // =========================================================================
-  // EVENT LISTENERS: PRESET CHIPS
-  // =========================================================================
-  document.querySelectorAll('.preset-chip').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
-      btn.classList.add('active');
-
-      const presetKey = btn.getAttribute('data-preset');
-      const preset = PRESETS[presetKey];
-
-      if (preset) {
-        formPurposeEl.value = preset.purpose;
-        formInputEl.value = preset.content;
-        runAudit();
-      }
-    });
-  });
-
-  // =========================================================================
-  // EVENT LISTENERS: TABS (HTML vs Field List)
-  // =========================================================================
-  const tabHtmlBtn = document.getElementById('tab-html');
-  const tabListBtn = document.getElementById('tab-list');
-
-  tabHtmlBtn.addEventListener('click', () => {
-    tabHtmlBtn.classList.add('active');
-    tabListBtn.classList.remove('active');
-    currentInputMode = 'html';
-    inputHelperTextEl.textContent = 'Paste Raw HTML Form Code:';
-    formInputEl.placeholder = "<form>\n  <input type='text' name='fname' />\n  <input type='email' name='user_email' />\n</form>";
-  });
-
-  tabListBtn.addEventListener('click', () => {
-    tabListBtn.classList.add('active');
-    tabHtmlBtn.classList.remove('active');
-    currentInputMode = 'list';
-    inputHelperTextEl.textContent = 'Enter Comma or Line Separated Field Names:';
-    formInputEl.placeholder = "user_email, mob_no, fname, txt_dob, cust_pin, usr_aadhaar_num";
-    
-    // If current content is HTML, convert to field list for user convenience
-    if (currentAuditReport && currentAuditReport.fields.length > 0) {
-      const listString = currentAuditReport.fields.map(f => f.rawIdentifier).join(', ');
-      formInputEl.value = listString;
-      runAudit();
-    }
-  });
-
-  // =========================================================================
-  // EVENT LISTENERS: INPUT AND LIVE AUDIT
-  // =========================================================================
-  btnAuditEl.addEventListener('click', runAudit);
-
-  formInputEl.addEventListener('input', () => {
-    if (chkLiveAuditEl.checked) {
-      runAudit();
-    }
-  });
-
-  formPurposeEl.addEventListener('input', () => {
-    if (chkLiveAuditEl.checked) {
-      runAudit();
-    }
-  });
-
-  // =========================================================================
-  // EVENT LISTENERS: FILTER BUTTONS
-  // =========================================================================
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeFilter = btn.getAttribute('data-filter');
-      if (currentAuditReport) {
-        renderSummaryTable(currentAuditReport.fields);
-      }
-    });
-  });
-
-  // =========================================================================
-  // EVENT LISTENERS: NOTICE LANGUAGE SWITCHER
-  // =========================================================================
-  langBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      langBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeLanguage = btn.getAttribute('data-lang');
-      if (currentAuditReport) {
-        renderNotice(currentAuditReport);
-      }
-    });
-  });
-
-  // Copy notice to clipboard
-  btnCopyNoticeEl.addEventListener('click', () => {
-    const text = noticeContentEl.textContent;
-    if (!text) return;
-
-    navigator.clipboard.writeText(text).then(() => {
-      showToast('Consent notice copied to clipboard!');
-    }).catch(err => {
-      console.warn("Clipboard write failed, using fallback:", err);
-      // Fallback
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      showToast('Consent notice copied to clipboard!');
-    });
-  });
-
-  // =========================================================================
-  // EXPORT FUNCTIONS: TXT & PDF
-  // =========================================================================
-  btnDownloadTxtEl.addEventListener('click', () => {
-    if (!currentAuditReport) runAudit();
-    const textReport = auditor.exportAsText(currentAuditReport);
-
-    const blob = new Blob([textReport], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `DPDP_Audit_Report_${Date.now()}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    showToast('Audit report downloaded as .txt file');
-  });
-
-  btnPrintPdfEl.addEventListener('click', () => {
-    if (!currentAuditReport) runAudit();
-    window.print();
-  });
-
-  // =========================================================================
-  // IN-BROWSER TEST SUITE RUNNER
-  // Shows judges all automated unit & integration test assertions running live!
-  // =========================================================================
-  btnRunTestsEl.addEventListener('click', () => {
-    testSuiteContainerEl.style.display = 'block';
-    testResultsListEl.innerHTML = '';
-
-    const testLogs = [];
-    function runTestAssert(condition, name) {
-      testLogs.push({ passed: Boolean(condition), name });
-    }
-
-    // Run browser test battery
-    const testAuditor = new DPDPAuditor();
-
-    // 1. Messy HTML form parsing
-    const messyHtml = `<form><input name="mob_no" /><input id="user_phone" /><input name="txt_dob" /><input name="usr_aadhaar_num" /></form>`;
-    const parsed = testAuditor.parseInput(messyHtml);
-    runTestAssert(parsed.length === 4, 'DOMParser parses 4 fields from messy HTML');
-
-    // 2. Keyword variations
-    const c1 = testAuditor.classifyField({ rawIdentifier: 'mob_no' });
-    runTestAssert(c1.category === 'Contact' && c1.isPersonal, 'mob_no classified as Contact personal data');
-
-    const c2 = testAuditor.classifyField({ rawIdentifier: 'txt_dob' });
-    runTestAssert(c2.category === 'Identity' && c2.isPersonal, 'txt_dob classified as Identity personal data');
-
-    const c3 = testAuditor.classifyField({ rawIdentifier: 'usr_aadhaar_num' });
-    runTestAssert(c3.category === 'Identity' && c3.isPersonal, 'usr_aadhaar_num classified as Identity personal data');
-
-    const c4 = testAuditor.classifyField({ rawIdentifier: 'credit_card_no' });
-    runTestAssert(c4.category === 'Financial' && c4.isPersonal, 'credit_card_no classified as Financial personal data');
-
-    const c5 = testAuditor.classifyField({ rawIdentifier: 'child_name' });
-    runTestAssert(c5.category === "Children's Data" && c5.isPersonal, "child_name classified as Children's Data");
-
-    // 3. Excess collection rules (Newsletter)
-    const reportNews = testAuditor.audit('email, mob_no, txt_dob, usr_aadhaar_num', 'newsletter signup');
-    const fEmail = reportNews.fields.find(f => f.rawIdentifier === 'email');
-    const fMob = reportNews.fields.find(f => f.rawIdentifier === 'mob_no');
-    const fDob = reportNews.fields.find(f => f.rawIdentifier === 'txt_dob');
-
-    runTestAssert(fEmail && !fEmail.isExcess, 'Newsletter: email is NOT excess (Needed)');
-    runTestAssert(fMob && fMob.isExcess, 'Newsletter: mob_no is flagged as EXCESS');
-    runTestAssert(fDob && fDob.isExcess, 'Newsletter: txt_dob is flagged as EXCESS');
-
-    // 4. Excess collection rules (E-Commerce)
-    const reportEcom = testAuditor.audit('name, phone, address, blood_group, religion', 'ecommerce checkout');
-    const fBlood = reportEcom.fields.find(f => f.rawIdentifier === 'blood_group');
-    const fRel = reportEcom.fields.find(f => f.rawIdentifier === 'religion');
-    runTestAssert(fBlood && fBlood.isExcess, 'E-Commerce: blood_group is flagged as EXCESS');
-    runTestAssert(fRel && fRel.isExcess, 'E-Commerce: religion is flagged as EXCESS');
-
-    // 5. Section 9 Children Protection
-    const reportChild = testAuditor.audit('child_name, student_age', 'newsletter signup');
-    const fChild = reportChild.fields.find(f => f.rawIdentifier === 'child_name');
-    runTestAssert(fChild && fChild.isExcess && fChild.reason.includes('Sec 9'), "DPDP Sec 9 guardrail protects children's data");
-
-    // 6. Score & Grade
-    runTestAssert(reportNews.compliance.score <= 40, 'Low compliance score for excess data newsletter');
-    const cleanReport = testAuditor.audit('email', 'newsletter signup');
-    runTestAssert(cleanReport.compliance.score === 100, '100% Compliance Score for clean minimal form');
-
-    // 7. Multi-Lingual Consent Notices
-    runTestAssert(reportNews.consentNotices.en.includes('DRAFT CONSENT NOTICE'), 'English consent notice generated');
-    runTestAssert(reportNews.consentNotices.hi.includes('डिजिटल वैयक्तिक डेटा संरक्षण'), 'Hindi legal notice generated');
-    runTestAssert(reportNews.consentNotices.mr.includes('डिजिटल वैयक्तिक डेटा संरक्षण कायदा'), 'Marathi legal notice generated');
-
-    // Render results
-    let passCount = 0;
-    testLogs.forEach(t => {
-      if (t.passed) passCount++;
-      const item = document.createElement('div');
-      item.className = 'test-item';
-      item.innerHTML = `
-        <span style="font-family: var(--font-mono);">${escapeHtml(t.name)}</span>
-        <span style="color: ${t.passed ? '#10b981' : '#ef4444'}; font-weight:700;">
-          ${t.passed ? '✓ PASSED' : '✗ FAILED'}
-        </span>
-      `;
-      testResultsListEl.appendChild(item);
-    });
-
-    showToast(`Test Suite: ${passCount}/${testLogs.length} tests passed successfully!`);
-  });
-
-  btnCloseTestsEl.addEventListener('click', () => {
-    testSuiteContainerEl.style.display = 'none';
-  });
-
-  // =========================================================================
-  // INITIAL LOAD
-  // =========================================================================
-  // Load Default Preset (Messy Newsletter)
-  formPurposeEl.value = PRESETS.newsletter.purpose;
-  formInputEl.value = PRESETS.newsletter.content;
+  const initMock = DPDPAuditor.MOCK_EXAMPLES.newsletter;
+  formPurposeSelectEl.value = initMock.purpose;
+  formInputEl.value = initMock.html;
   runAudit();
 });

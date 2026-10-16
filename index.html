@@ -3,141 +3,172 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DPDP Form Auditor | Digital Personal Data Protection Act, 2023</title>
-  <meta name="description" content="Client-side privacy compliance auditor reviewing web forms against India's DPDP Act 2023. Detects excess personal data collection and drafts multi-lingual consent notices.">
-  
+  <title>FormSentry // Privacy Investigation Lab — DPDP Form Auditor</title>
+  <meta name="description" content="Collect less. Explain more. FormSentry is an evidence-based DPDP Form Auditor and futuristic Privacy Investigation Lab running 100% locally in your browser.">
+
   <!-- Modern Typography (Inter & JetBrains Mono) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css?v=2.1">
 </head>
 <body>
 
   <div class="container">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="brand-section">
-        <div class="brand-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            <path d="m9 12 2 2 4-4"/>
-          </svg>
-        </div>
-        <div class="brand-text">
-          <h1>DPDP Form Auditor</h1>
-          <span class="brand-badge">Digital Personal Data Protection Act, 2023 &bull; Sec 5 & 6 Compliance</span>
-        </div>
-      </div>
+    <!-- ====================================================================
+         HERO SECTION: 3D SCANNING GRID & FORMSENTRY MISSION
+         ==================================================================== -->
+    <header class="hero-wrapper">
+      <div id="hero-grid-canvas" class="hero-canvas-container" title="Interactive 3D Perspective Scanner (Move mouse for parallax)"></div>
 
-      <div class="header-actions">
-        <div class="privacy-badge" title="Zero network requests made. Analysis runs entirely in your browser.">
-          <span class="privacy-dot"></span>
-          <span>100% Client-Side &bull; Privacy First</span>
+      <div class="hero-content">
+        <div class="hero-meta-strip">
+          <span class="brand-badge">FORMSENTRY // PRIVACY INVESTIGATION LAB</span>
+          <span class="tagline-badge">Collect less. Explain more.</span>
+          <span class="privacy-badge">
+            <span class="privacy-dot"></span>
+            <span>100% CLIENT-SIDE &bull; LOCAL RULE ENGINE</span>
+          </span>
         </div>
-        <button id="btn-run-tests" class="btn btn-secondary btn-sm" title="Run in-browser automated verification test suite">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-          Run Tests
-        </button>
-        <button id="btn-download-txt" class="btn btn-secondary btn-sm" title="Download text report">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export TXT
-        </button>
-        <button id="btn-print-pdf" class="btn btn-primary btn-sm" title="Print or save as PDF">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          Export PDF
-        </button>
+
+        <h1 class="hero-title">
+          Evidence-Based <span>Privacy Investigation Lab</span>
+        </h1>
+        <p class="hero-desc">
+          Investigate what a web form collects, understand why each field exists under India's <strong>DPDP Act 2023</strong>, and perform <strong>Privacy Surgery</strong> to request less information.
+        </p>
+
+        <div class="hero-actions-bar">
+          <button id="btn-hero-audit" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            INITIATE AUDIT
+          </button>
+          <button id="btn-hero-tests" class="btn btn-secondary" title="Run in-browser 10-battery test suite for judge inspection">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            RUN TEST SUITE
+          </button>
+          <button id="btn-export-txt" class="btn btn-secondary" title="Download audit dossier as .txt file">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            EXPORT TXT REPORT
+          </button>
+          <button id="btn-export-pdf" class="btn btn-secondary" title="Print executive audit sheet or save as PDF">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            PRINT / PDF
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- Main Grid: Input Form + Compliance Scorecard -->
-    <main class="grid-main">
-      <!-- Left Column: Form & Purpose Input -->
-      <section class="card" aria-labelledby="input-panel-title">
-        <div class="card-header">
-          <h2 id="input-panel-title" class="card-title">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M21 9H3"/><path d="M9 21V9"/></svg>
+    <!-- ====================================================================
+         INPUT WORKSPACE & 3D PARTICLE CONSTELLATION
+         ==================================================================== -->
+    <main class="grid-workspace">
+      <!-- Left Panel: Input & Purpose -->
+      <section class="panel" aria-labelledby="input-panel-heading">
+        <div class="panel-header">
+          <h2 id="input-panel-heading" class="panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-lime)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M21 9H3"/><path d="M9 21V9"/></svg>
             Form Input & Declared Purpose
           </h2>
-          <span style="font-size: 0.78rem; color: var(--text-dim);">Parser Engine v2.0</span>
+          <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim);" id="input-stats-indicator">0 fields detected</span>
         </div>
 
-        <!-- Judge Demo Presets -->
-        <div class="preset-section">
-          <div class="preset-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m13 2-2 2.5V8l3 2-1 4 4-2 3 5 2-1-3-7 2-2-4-1-2-5z"/></svg>
-            Judge Quick-Demo Scenarios (Click to test):
+        <!-- Mock Test Case Switcher (Part 17) -->
+        <div class="example-section">
+          <div class="example-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Load Real Demonstration Scenarios:
           </div>
-          <div class="preset-chips">
-            <button class="preset-chip active" data-preset="newsletter">1. Messy Newsletter (Excess Mob/DOB/Aadhaar)</button>
-            <button class="preset-chip" data-preset="ecommerce">2. E-Commerce (Excess Religion/Blood/Salary)</button>
-            <button class="preset-chip" data-preset="job">3. Job Application (Excess GPS/Bank Info)</button>
-            <button class="preset-chip" data-preset="children">4. School Portal (DPDP Sec 9 Child Data)</button>
-            <button class="preset-chip" data-preset="healthcare">5. Clinic Consultation (Excess Voter ID)</button>
-            <button class="preset-chip" data-preset="clean">6. Minimal Compliant Form (100% Score)</button>
+          <div class="example-chips">
+            <button class="example-chip active" data-mock="newsletter">Example A: Newsletter (Excess DOB/Aadhaar/Health)</button>
+            <button class="example-chip" data-mock="job">Example B: Job Application (Premature Bank/PAN)</button>
+            <button class="example-chip" data-mock="school">Example C: School Admission (Section 9 Children Data)</button>
           </div>
         </div>
 
-        <!-- Input Mode Switcher Tabs -->
+        <!-- Mode Switcher Tabs -->
         <div class="tab-group" role="tablist">
-          <button id="tab-html" class="tab-btn active" role="tab" aria-selected="true">HTML Form Code</button>
-          <button id="tab-list" class="tab-btn" role="tab" aria-selected="false">Field Names List</button>
+          <button id="tab-html" class="tab-btn active" role="tab" aria-selected="true">Mode A: Paste HTML Form</button>
+          <button id="tab-list" class="tab-btn" role="tab" aria-selected="false">Mode B: Enter Field Names</button>
         </div>
 
-        <!-- Form Code / Field List Textarea -->
+        <!-- Input Area -->
         <div class="form-group">
           <label class="form-label" for="form-input">
-            <span id="input-helper-text">Paste Raw HTML Form Code:</span>
-            <span style="font-size: 0.75rem; color: var(--text-dim);" id="input-stats">0 fields detected</span>
+            <span id="input-mode-label">Paste HTML Form Code:</span>
+            <span style="font-size: 0.72rem; color: var(--text-dim); font-family: var(--font-mono);">DOMParser &bull; Safe Non-Executing</span>
           </label>
-          <textarea id="form-input" class="form-textarea" spellcheck="false" placeholder="<form>&#10;  <input type='text' name='fname' />&#10;  <input type='email' name='user_email' />&#10;  <input type='tel' id='mob_no' />&#10;  <input type='date' name='txt_dob' />&#10;</form>"></textarea>
+          <textarea id="form-input" class="form-textarea" spellcheck="false" placeholder="<form>&#10;  <label for='email'>Email</label>&#10;  <input type='email' id='email' name='user_email' />&#10;  <input type='tel' name='mob_no' />&#10;</form>"></textarea>
         </div>
 
-        <!-- Purpose Specification -->
-        <div class="form-group">
-          <label class="form-label" for="form-purpose">
-            <span>Declared One-Line Purpose:</span>
-            <span style="font-size: 0.75rem; color: #a5b4fc;">DPDP Section 6(1) Purpose Specification</span>
+        <!-- Purpose Selector (Part 8 & 11) -->
+        <div class="form-group purpose-wrapper">
+          <label class="form-label" for="form-purpose-select">
+            <span>Declared Form Purpose (Section 6(1) Specification):</span>
+            <span style="font-size: 0.72rem; color: var(--accent-lime); font-family: var(--font-mono);">Purpose Limitation</span>
           </label>
-          <input type="text" id="form-purpose" class="form-input" value="newsletter signup" placeholder="e.g. newsletter signup, ecommerce checkout, job application" list="purpose-suggestions" />
-          <datalist id="purpose-suggestions">
-            <option value="newsletter signup">
-            <option value="ecommerce checkout & delivery">
-            <option value="job application portal">
-            <option value="user account signup">
-            <option value="healthcare doctor appointment">
-            <option value="banking KYC verification">
-            <option value="event webinar registration">
-            <option value="children school admission">
-            <option value="contact us feedback">
-          </datalist>
+          <select id="form-purpose-select" class="form-select">
+            <option value="newsletter" selected>Newsletter signup (Email delivery & updates)</option>
+            <option value="contact_support">Contact or support (General inquiries & helpdesk)</option>
+            <option value="account_registration">Account registration (User login & profile)</option>
+            <option value="job_application">Job application (Recruitment & candidate screening)</option>
+            <option value="ecommerce_checkout">E-commerce checkout (Parcel delivery & payments)</option>
+            <option value="appointment_booking">Appointment booking (Clinic visits & consultations)</option>
+            <option value="school_admission">School admission (Student K-12 enrollment — DPDP Sec 9)</option>
+            <option value="custom">Custom purpose (User-defined objective)</option>
+          </select>
+
+          <!-- Custom Purpose Input (Revealed when 'custom' is selected) -->
+          <div id="custom-purpose-box" style="display: none; margin-top: 0.5rem;">
+            <input type="text" id="form-custom-purpose" class="form-input" placeholder="Enter custom business purpose (e.g. library card issuance)" />
+          </div>
         </div>
 
-        <!-- Audit Action Bar -->
+        <!-- Controls Bar -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-          <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.84rem; color: var(--text-muted); cursor: pointer;">
-            <input type="checkbox" id="chk-live-audit" checked />
-            <span>Audit automatically on input change</span>
-          </label>
-          <button id="btn-audit" class="btn btn-primary">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            Audit Form Now
-          </button>
+          <div style="display: flex; gap: 0.5rem;">
+            <button id="btn-clear-all" class="btn btn-secondary btn-sm" title="Clear all input and reset application state">Clear Input</button>
+            <button id="btn-reset-analysis" class="btn btn-secondary btn-sm" title="Reset all proposed modifications to engine defaults">Reset Analysis</button>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.85rem;">
+            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--text-muted); cursor: pointer;">
+              <input type="checkbox" id="chk-live-audit" checked />
+              <span>Real-time recalculation</span>
+            </label>
+            <button id="btn-audit-main" class="btn btn-primary">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              AUDIT FORM
+            </button>
+          </div>
         </div>
       </section>
 
-      <!-- Right Column: Compliance Scorecard & Metric Breakdown -->
-      <section class="card" aria-labelledby="score-panel-title">
-        <div class="card-header">
-          <h2 id="score-panel-title" class="card-title">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            DPDP Compliance Scorecard
+      <!-- Right Panel: Interactive 3D Data Particles & Minimization Score -->
+      <section class="panel" aria-labelledby="score-panel-heading">
+        <div class="panel-header">
+          <h2 id="score-panel-heading" class="panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-lime)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+            Interactive Data-Particle Space
           </h2>
-          <span id="score-grade-pill" class="badge badge-excess">Grade F</span>
+          <span id="score-grade-pill" class="score-grade" style="background: var(--status-excess); color: #fff;">Grade F</span>
         </div>
 
-        <!-- Radial Gauge & Score Breakdown -->
+        <!-- Contained 3D Data-Particle Space (Part 6) -->
+        <div class="particle-space-wrapper">
+          <div id="particle-space-canvas" class="particle-space-canvas" title="Interactive Field Constellation (Click any node to inspect evidence dossier)"></div>
+        </div>
+
+        <!-- 3D Legend -->
+        <div class="particle-legend">
+          <div class="legend-item"><span class="legend-dot" style="background: var(--accent-lime);"></span> Likely Necessary</div>
+          <div class="legend-item"><span class="legend-dot" style="background: var(--status-warn);"></span> Review / Optional</div>
+          <div class="legend-item"><span class="legend-dot" style="background: var(--status-excess);"></span> Likely Excessive</div>
+          <div class="legend-item"><span class="legend-dot" style="background: var(--text-dim);"></span> Non-Personal / Unknown</div>
+        </div>
+
+        <!-- Scorecard: Heuristic Minimization Score (Part 16) -->
         <div class="scorecard">
           <div class="gauge-wrapper">
             <svg class="gauge-svg" viewBox="0 0 100 100">
@@ -145,72 +176,154 @@
               <circle id="gauge-progress" class="gauge-fill" cx="50" cy="50" r="45"></circle>
             </svg>
             <div class="gauge-center-text">
-              <div id="gauge-score-num" class="gauge-value">20</div>
+              <div id="gauge-score-num" class="gauge-value" style="color: var(--status-excess);">20</div>
               <div class="gauge-total">/ 100</div>
             </div>
           </div>
 
           <div class="score-details">
             <div class="score-status-row">
-              <span id="score-status-badge" class="score-grade" style="background: var(--status-excess); color: #fff;">NON-COMPLIANT</span>
-              <h3 id="score-status-text" class="score-status-title">Severe Non-Compliance</h3>
+              <span id="score-status-badge" class="score-grade" style="background: var(--status-excess); color: #fff;">F</span>
+              <h3 id="score-status-text" class="score-status-title">Critical Excess Collection</h3>
             </div>
             <p id="score-explanation-text" class="score-explanation">
-              Form contains significant excess personal data collections (phone, DOB, Aadhaar) that are unnecessary for email newsletters.
+              Form requests multiple sensitive demographics (date of birth, phone, Aadhaar) unnecessary for email delivery.
             </p>
           </div>
         </div>
 
-        <!-- 4 Key Stat Metrics -->
+        <!-- 4 Stats Strip -->
         <div class="stats-strip">
           <div class="stat-box">
-            <div id="stat-total" class="stat-number">7</div>
+            <div id="stat-total" class="stat-number">8</div>
             <div class="stat-label">Total Fields</div>
           </div>
           <div class="stat-box">
-            <div id="stat-personal" class="stat-number" style="color: #38bdf8;">6</div>
+            <div id="stat-personal" class="stat-number" style="color: #38bdf8;">7</div>
             <div class="stat-label">Personal Data</div>
           </div>
           <div class="stat-box">
-            <div id="stat-needed" class="stat-number" style="color: #10b981;">2</div>
-            <div class="stat-label">Legitimately Needed</div>
+            <div id="stat-excessive" class="stat-number" style="color: #f43f5e;">5</div>
+            <div class="stat-label">Excessive</div>
           </div>
           <div class="stat-box">
-            <div id="stat-excess" class="stat-number" style="color: #ef4444;">4</div>
-            <div class="stat-label">Excess Collection</div>
+            <div id="stat-proposed" class="stat-number" style="color: #10e871;">3</div>
+            <div class="stat-label">Proposed Minimized</div>
           </div>
         </div>
 
-        <!-- Categories Distribution -->
-        <div style="margin-bottom: 0.6rem;">
-          <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: var(--text-dim);">
-            Detected Data Categories:
-          </span>
-        </div>
-        <div id="category-pills-container" class="category-pills">
-          <!-- Filled by JS -->
-        </div>
-
-        <!-- DPDP Legal Requirement Tip -->
-        <div style="background: rgba(99, 102, 241, 0.08); border-left: 3px solid var(--accent-primary); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.8rem; color: #c7d2fe;">
-          <strong>DPDP Act 2023 Sec 6(1):</strong> Personal data must be limited strictly to what is necessary for the specified purpose. Excess collection triggers regulatory scrutiny under Section 33.
+        <!-- Instant Field Decisions Quick-List (Visible directly in top-right corner!) -->
+        <div class="quick-decisions-panel">
+          <div class="quick-decisions-header">
+            <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; font-weight:700; color:var(--accent-lime); font-family:var(--font-mono);">
+              ⚡ Field Decisions Summary (Top Corner)
+            </span>
+            <span style="font-size:0.72rem; color:var(--text-dim); font-family:var(--font-mono);" id="quick-decisions-count">0 fields</span>
+          </div>
+          <div id="quick-decisions-list" class="quick-decisions-list">
+            <!-- Populated dynamically with color badges -->
+          </div>
         </div>
       </section>
     </main>
 
-    <!-- Section 2: Summary Table of Fields -->
-    <section class="table-section">
-      <div class="table-filter-bar">
+    <!-- ====================================================================
+         FEATURE B: PRIVACY SURGERY WORKSPACE (Part 12)
+         ==================================================================== -->
+    <section class="panel surgery-section" aria-labelledby="surgery-panel-heading">
+      <div class="panel-header">
         <div>
-          <h2 style="font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em;">Field Audit Summary Table</h2>
-          <p style="font-size: 0.82rem; color: var(--text-muted);">Classification, necessity evaluation, and justification reasons</p>
+          <h2 id="surgery-panel-heading" class="panel-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-lime)" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg>
+            Privacy Surgery — Interactive Before-and-After Minimization
+          </h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+            Compare <strong>Original Form</strong> vs <strong>Recommended Minimized Form</strong>. Remove, restore, or make fields optional to see real-time impact.
+          </p>
         </div>
 
-        <div class="filter-buttons">
-          <button class="filter-btn active" data-filter="all">All Fields (<span id="count-all">0</span>)</button>
-          <button class="filter-btn" data-filter="excess" style="color: #fca5a5;">Excess Only (<span id="count-excess">0</span>)</button>
-          <button class="filter-btn" data-filter="needed" style="color: #86efac;">Needed Only (<span id="count-needed">0</span>)</button>
-          <button class="filter-btn" data-filter="children" style="color: #f472b6;">Children's Data (<span id="count-children">0</span>)</button>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button id="btn-copy-minimized-list" class="btn btn-secondary btn-sm" title="Copy comma-separated list of minimized fields">
+            Copy Field List
+          </button>
+          <button id="btn-copy-minimized-html" class="btn btn-secondary btn-sm" title="Copy clean HTML markup of minimized form">
+            Copy Minimized HTML
+          </button>
+          <button id="btn-reset-surgery" class="btn btn-secondary btn-sm" title="Reset all user overrides back to engine recommendations">
+            Reset to Engine
+          </button>
+        </div>
+      </div>
+
+      <!-- Surgery 3 Columns: KEEP, OPTIONAL, REMOVE -->
+      <div class="surgery-grid">
+        <!-- 1. KEEP Column -->
+        <div class="surgery-col col-keep">
+          <div class="surgery-col-header">
+            <span class="surgery-col-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              1. KEEP (<span id="surgery-keep-count">1</span>)
+            </span>
+            <span style="font-size: 0.7rem; color: var(--text-dim); font-family: var(--font-mono);">Likely Necessary</span>
+          </div>
+          <div id="surgery-keep-list" class="surgery-card-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- 2. OPTIONAL / REVIEW Column -->
+        <div class="surgery-col col-optional">
+          <div class="surgery-col-header">
+            <span class="surgery-col-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              2. OPTIONAL / REVIEW (<span id="surgery-optional-count">2</span>)
+            </span>
+            <span style="font-size: 0.7rem; color: var(--text-dim); font-family: var(--font-mono);">Justification Needed</span>
+          </div>
+          <div id="surgery-optional-list" class="surgery-card-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- 3. REMOVE Column -->
+        <div class="surgery-col col-remove">
+          <div class="surgery-col-header">
+            <span class="surgery-col-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              3. REMOVE (<span id="surgery-remove-count">5</span>)
+            </span>
+            <span style="font-size: 0.7rem; color: var(--text-dim); font-family: var(--font-mono);">Likely Excessive</span>
+          </div>
+          <div id="surgery-remove-list" class="surgery-card-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         FEATURE A: EVIDENCE WALL & FINDINGS TABLE (Part 15)
+         ==================================================================== -->
+    <section class="table-section" aria-labelledby="table-panel-heading">
+      <div class="table-filter-bar">
+        <div>
+          <h2 id="table-panel-heading" style="font-size: 1.15rem; font-weight: 700; color: #fff;">
+            Evidence Wall & Findings Table
+          </h2>
+          <p style="font-size: 0.78rem; color: var(--text-muted);">
+            Click any row or 3D node to open the Evidence Dossier.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+          <input type="text" id="table-search-input" class="form-input" placeholder="Search field or category..." style="width: 200px; padding: 0.35rem 0.65rem; font-size: 0.78rem;" />
+
+          <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All Fields (<span id="fcount-all">0</span>)</button>
+            <button class="filter-btn" data-filter="personal" style="color: #38bdf8;">Personal (<span id="fcount-personal">0</span>)</button>
+            <button class="filter-btn" data-filter="excess" style="color: #fca5a5;">Excessive (<span id="fcount-excess">0</span>)</button>
+            <button class="filter-btn" data-filter="review" style="color: #fde047;">Needs Review (<span id="fcount-review">0</span>)</button>
+          </div>
         </div>
       </div>
 
@@ -219,78 +332,149 @@
           <thead>
             <tr>
               <th>Field Identifier</th>
-              <th>Personal Data?</th>
+              <th>Assessment</th>
               <th>Category</th>
               <th>Necessity Status</th>
-              <th>DPDP Compliance Reason & Legal Basis</th>
+              <th>Recommended Action & Reason</th>
+              <th>Dossier</th>
             </tr>
           </thead>
-          <tbody id="audit-table-body">
+          <tbody id="findings-table-body">
             <!-- Dynamically populated rows -->
           </tbody>
         </table>
       </div>
     </section>
 
-    <!-- Section 3: Draft Consent Notice Generator -->
-    <section class="card notice-section">
-      <div class="card-header">
-        <div class="card-title">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          DPDP Section 5 Draft Consent Notice Generator
-        </div>
-        <div style="font-size: 0.75rem; color: var(--status-warn); font-weight: 600;">
-          Draft Notice &bull; Not Formal Legal Advice
-        </div>
-      </div>
-
-      <div class="notice-language-bar">
-        <div class="lang-tabs" role="tablist">
-          <button class="lang-btn active" data-lang="en">English Notice</button>
-          <button class="lang-btn" data-lang="hi">Hindi (हिंदी)</button>
-          <button class="lang-btn" data-lang="mr">Marathi (मराठी)</button>
+    <!-- ====================================================================
+         FEATURE C: CONSENT STUDIO & QUALITY CHECKLIST (Part 14)
+         ==================================================================== -->
+    <section class="panel studio-section" aria-labelledby="studio-panel-heading">
+      <div class="panel-header">
+        <div>
+          <h2 id="studio-panel-heading" class="panel-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-lime)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Consent Studio — Editable Section 5 Draft Notice
+          </h2>
+          <span style="font-size: 0.74rem; color: var(--status-warn); font-family: var(--font-mono);">Draft Notice &bull; Not Formal Legal Advice</span>
         </div>
 
         <button id="btn-copy-notice" class="btn btn-secondary btn-sm">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           Copy Consent Notice
         </button>
       </div>
 
-      <pre id="notice-content" class="notice-preview-box"></pre>
+      <div class="studio-grid">
+        <!-- Left: Notice Textarea -->
+        <div>
+          <div class="notice-language-bar">
+            <div class="lang-tabs" role="tablist">
+              <button class="lang-btn active" data-lang="en">English Notice</button>
+              <button class="lang-btn" data-lang="hi">Hindi (हिन्दी)</button>
+              <button class="lang-btn" data-lang="mr">Marathi (मराठी)</button>
+            </div>
+            <span style="font-size: 0.72rem; color: var(--text-dim); font-family: var(--font-mono);">Editable &bull; Real-time checklist</span>
+          </div>
+
+          <textarea id="notice-editor" class="notice-preview-textarea" spellcheck="false"></textarea>
+        </div>
+
+        <!-- Right: Consent Notice Quality Checklist -->
+        <div class="checklist-card">
+          <h3 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono); color: var(--accent-lime); margin-bottom: 0.75rem;">
+            Notice Quality Inspection Check
+          </h3>
+          <div id="notice-quality-list">
+            <!-- Dynamic checks populated by JS -->
+          </div>
+          <div style="margin-top: 1rem; padding: 0.65rem 0.8rem; background: rgba(245, 158, 11, 0.08); border-left: 3px solid var(--status-warn); border-radius: var(--radius-xs); font-size: 0.74rem; color: #fde047;">
+            <strong>DPDP Section 5 & 6(4):</strong> Data Fiduciaries must provide unambiguous withdrawal instructions and state the exact purpose before processing.
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- Section 4: In-Browser Verification Test Suite Panel (Collapsible for Judges) -->
-    <section id="test-suite-container" class="test-suite-panel" style="display: none;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h3 style="font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          In-Browser Automated Test Suite (Judge Inspection)
+    <!-- ====================================================================
+         IN-BROWSER TEST SUITE PANEL (Part 21)
+         ==================================================================== -->
+    <section id="test-suite-panel" class="panel" style="display: none; margin-bottom: 2rem;">
+      <div class="panel-header">
+        <h3 class="panel-title" style="color: var(--accent-lime);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          In-Browser Automated Master Test Suite (10 Batteries)
         </h3>
         <button id="btn-close-tests" class="btn btn-secondary btn-sm">Close Panel</button>
       </div>
-      <div id="test-results-list"></div>
+      <div id="test-suite-results-list" style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 380px; overflow-y: auto;">
+        <!-- Filled by JS -->
+      </div>
     </section>
 
     <!-- Footer -->
     <footer class="app-footer">
       <p>
-        <strong>DPDP Form Auditor</strong> &bull; Built for <em>Vibe Coding: Swayambhu 2K26</em>
+        <strong>FormSentry // Privacy Investigation Lab</strong> &bull; Vibe Coding: Swayambhu 2K26
       </p>
       <p style="margin-top: 0.25rem;">
-        Engineered according to the <strong>Digital Personal Data Protection Act, 2023 (Act No. 22 of 2023, Ministry of Law and Justice, India)</strong>.
+        Engineered according to the <strong>Digital Personal Data Protection Act, 2023 (Act No. 22 of 2023, India)</strong>. Zero server telemetry &bull; 100% Client-Side.
       </p>
     </footer>
   </div>
 
-  <!-- Toast Notification -->
+  <!-- ====================================================================
+       PRIVACY DETECTIVE EVIDENCE DOSSIER MODAL (Part 10)
+       ==================================================================== -->
+  <div id="dossier-modal" class="dossier-modal" style="display: none;">
+    <div class="dossier-card">
+      <button id="btn-close-dossier" class="dossier-close-btn" title="Close Dossier">&times;</button>
+      
+      <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem;">
+        <span class="brand-badge">PRIVACY DETECTIVE EVIDENCE DOSSIER</span>
+        <span id="dossier-evidence-level" class="badge badge-operational">High Evidence</span>
+      </div>
+
+      <h2 id="dossier-field-title" style="font-size: 1.4rem; font-weight: 800; font-family: var(--font-mono); color: #fff; margin-bottom: 0.25rem;">
+        user_email
+      </h2>
+      <div id="dossier-meta-subtitle" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Category: Contact &bull; Status: Likely Necessary
+      </div>
+
+      <!-- 3 Questions -->
+      <div class="dossier-question-box">
+        <div class="dossier-q-title">1. What Was Detected?</div>
+        <div id="dossier-q1-detected" class="dossier-q-body"></div>
+      </div>
+
+      <div class="dossier-question-box">
+        <div class="dossier-q-title">2. Why Might It Be Unnecessary?</div>
+        <div id="dossier-q2-why" class="dossier-q-body"></div>
+      </div>
+
+      <div class="dossier-question-box">
+        <div class="dossier-q-title">3. What Should The Form Owner Do?</div>
+        <div id="dossier-q3-action" class="dossier-q-body"></div>
+      </div>
+
+      <!-- Minimum Data Alternative -->
+      <div id="dossier-alt-box" class="dossier-question-box" style="border-color: rgba(16, 232, 113, 0.3); background: rgba(16, 232, 113, 0.04);">
+        <div class="dossier-q-title" style="color: var(--accent-lime);">Minimum Data Alternative:</div>
+        <div id="dossier-alt-body" class="dossier-q-body" style="color: #a7f3d0;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
   <div id="app-toast" class="toast">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-    <span id="toast-message">Copied to clipboard!</span>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-lime)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    <span id="toast-message">Notification</span>
   </div>
 
   <!-- Scripts -->
-  <script src="dpdp-auditor.js"></script>
-  <script src="app.js"></script>
+  <script src="three.min.js?v=2.1"></script>
+  <script src="three-scenes.js?v=2.1"></script>
+  <script src="dpdp-auditor.js?v=2.1"></script>
+  <script src="app.js?v=2.1"></script>
 </body>
 </html>

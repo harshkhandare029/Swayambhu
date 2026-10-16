@@ -1,6 +1,6 @@
 /**
- * Comprehensive Test Suite for DPDP Form Auditor Core Engine
- * Verifies all Hackathon requirements, edge cases, and judge test scenarios.
+ * FormSentry - Master Test Suite
+ * Verifies all 10 Core Evaluation Batteries from Part 21 of the FormSentry Specification
  */
 
 const DPDPAuditor = require('./dpdp-auditor.js');
@@ -18,133 +18,170 @@ function assert(condition, testName) {
   }
 }
 
-console.log("=================================================");
-console.log("RUNNING DPDP FORM AUDITOR TEST SUITE");
-console.log("=================================================\n");
+console.log("==================================================================");
+console.log("FORMSENTRY PRIVACY INVESTIGATION LAB — MASTER TEST SUITE");
+console.log("==================================================================\n");
 
 const auditor = new DPDPAuditor();
 
 // -----------------------------------------------------------------
-// TEST 1: Parsing messy real-world HTML form with odd field names
+// TEST 1: Messy Aliases & Lexicon
 // -----------------------------------------------------------------
-console.log("--- Test Suite 1: Messy Real-World Form Parsing ---");
-const messyHtmlForm = `
-<form id="signup-form">
-  <input type="text" name="fname" placeholder="First Name" />
-  <input type="email" name="user_email" required />
-  <input type="tel" id="mob_no" name="mob_no" />
-  <input type="text" name="cust_pin" placeholder="PIN Code" />
-  <input type="text" id="usr_aadhaar_num" />
-  <input type="date" name="txt_dob" />
-  <input type="hidden" name="csrf_token" value="abc123xyz" />
-  <button type="submit">Submit</button>
+console.log("--- Battery 1: Messy Aliases & Lexicon Verification ---");
+const messyList = 'user_email, mob_no, mobileNumber, user_phone, dob, aadhaar_no, addr, health_condition';
+const t1Report = auditor.audit(messyList, 'newsletter signup');
+
+assert(t1Report.fields.length === 8, 'Parsed all 8 messy field aliases');
+
+const fEmail = t1Report.fields.find(f => f.rawIdentifier === 'user_email');
+assert(fEmail && fEmail.category === 'Contact' && fEmail.assessment === 'Likely personal data', 'user_email classified as Contact (Personal)');
+
+const fMobNo = t1Report.fields.find(f => f.rawIdentifier === 'mob_no');
+assert(fMobNo && fMobNo.category === 'Contact' && fMobNo.isExcess, 'mob_no detected as Contact alias and flagged as Excess for newsletter');
+
+const fMobCamel = t1Report.fields.find(f => f.rawIdentifier === 'mobileNumber');
+assert(fMobCamel && fMobCamel.category === 'Contact' && fMobCamel.isExcess, 'mobileNumber camelCase alias recognized');
+
+const fDob = t1Report.fields.find(f => f.rawIdentifier === 'dob');
+assert(fDob && fDob.category === 'Identity' && fDob.isExcess, 'dob recognized as Identity alias and flagged Excess');
+
+const fAadhaar = t1Report.fields.find(f => f.rawIdentifier === 'aadhaar_no');
+assert(fAadhaar && fAadhaar.category === 'Identity' && fAadhaar.isExcess, 'aadhaar_no recognized as Identity and flagged Excess');
+
+const fHealth = t1Report.fields.find(f => f.rawIdentifier === 'health_condition');
+assert(fHealth && fHealth.category === 'Health' && fHealth.isExcess, 'health_condition recognized as Health and flagged Excess');
+
+// -----------------------------------------------------------------
+// TEST 2: Safe HTML Parser with DOMParser / Attributes
+// -----------------------------------------------------------------
+console.log("\n--- Battery 2: HTML Form Parser with Deep Metadata ---");
+const testHtml = `
+<form id="audit-form">
+  <label for="f_email">Primary Email</label>
+  <input type="email" id="f_email" name="user_email" autocomplete="email" placeholder="you@domain.com" required />
+
+  <label for="f_tel">Phone</label>
+  <input type="tel" id="f_tel" name="mob_no" />
+
+  <label for="f_country">Country</label>
+  <select id="f_country" name="user_country">
+    <option value="IN">India</option>
+  </select>
+
+  <label for="f_notes">Special Instructions</label>
+  <textarea id="f_notes" name="comments"></textarea>
+
+  <input type="hidden" name="csrf_token" value="sec_token_999" />
+  <button type="submit">Submit Form</button>
 </form>
 `;
 
-const parsedFields = auditor.parseInput(messyHtmlForm);
-assert(parsedFields.length === 7, `Correctly parsed 7 input fields from messy HTML (got ${parsedFields.length})`);
+const parsedHtmlFields = auditor.parseInput(testHtml);
+assert(parsedHtmlFields.length === 5, `Extracted 5 data controls excluding standalone submit button (got ${parsedHtmlFields.length})`);
+
+const emailParsed = parsedHtmlFields.find(f => f.name === 'user_email');
+assert(emailParsed && emailParsed.autocomplete === 'email' && emailParsed.type === 'email' && emailParsed.label === 'Primary Email', 'Extracted name, type, autocomplete, and connected label via for= attribute');
 
 // -----------------------------------------------------------------
-// TEST 2: Classification of odd field variations
+// TEST 3: Dynamic Purpose Switching
 // -----------------------------------------------------------------
-console.log("\n--- Test Suite 2: Field Keyword & Pattern Classification ---");
+console.log("\n--- Battery 3: Dynamic Purpose-Aware Necessity Recalculation ---");
+const multiPurposeFields = 'student_dob, home_address';
 
-const testCases = [
-  { raw: 'mob_no', expectedCat: 'Contact', expectedPersonal: true },
-  { raw: 'user_phone', expectedCat: 'Contact', expectedPersonal: true },
-  { raw: 'fname', expectedCat: 'Identity', expectedPersonal: true },
-  { raw: 'txt_dob', expectedCat: 'Identity', expectedPersonal: true },
-  { raw: 'cust_pin', expectedCat: 'Contact', expectedPersonal: true },
-  { raw: 'usr_aadhaar_num', expectedCat: 'Identity', expectedPersonal: true },
-  { raw: 'pan_card', expectedCat: 'Financial', expectedPersonal: true },
-  { raw: 'bank_acc_no', expectedCat: 'Financial', expectedPersonal: true },
-  { raw: 'blood_group', expectedCat: 'Health', expectedPersonal: true },
-  { raw: 'curr_loc', expectedCat: 'Location', expectedPersonal: true },
-  { raw: 'child_name', expectedCat: "Children's Data", expectedPersonal: true },
-  { raw: 'csrf_token', expectedCat: 'Non-Personal / Technical', expectedPersonal: false },
-  { raw: 'discount_coupon', expectedCat: 'Non-Personal / Technical', expectedPersonal: false }
-];
+// For newsletter signup
+const newsAudit = auditor.audit(multiPurposeFields, 'newsletter signup');
+const newsDob = newsAudit.fields.find(f => f.rawIdentifier === 'student_dob');
+const newsAddr = newsAudit.fields.find(f => f.rawIdentifier === 'home_address');
+assert(newsDob.necessityStatus === 'Likely excessive', 'Newsletter: student_dob is LIKELY EXCESSIVE');
+assert(newsAddr.necessityStatus === 'Likely excessive', 'Newsletter: home_address is LIKELY EXCESSIVE');
 
-testCases.forEach(tc => {
-  const result = auditor.classifyField({ rawIdentifier: tc.raw, name: tc.raw });
-  assert(
-    result.category === tc.expectedCat && result.isPersonal === tc.expectedPersonal,
-    `Field "${tc.raw}" classified as ${result.category} (Personal: ${result.isPersonal})`
-  );
-});
+// Switch purpose to school admission
+const schoolAudit = auditor.audit(multiPurposeFields, 'school admission');
+const schoolDob = schoolAudit.fields.find(f => f.rawIdentifier === 'student_dob');
+const schoolAddr = schoolAudit.fields.find(f => f.rawIdentifier === 'home_address');
+assert(schoolDob.necessityStatus === 'Likely necessary', 'School Admission: student_dob dynamically recalculated as LIKELY NECESSARY');
+assert(schoolAddr.necessityStatus === 'Potentially necessary — justification needed', 'School Admission: home_address recalculated as POTENTIALLY NECESSARY');
 
 // -----------------------------------------------------------------
-// TEST 3: Purpose-Driven Excess Collection - Newsletter Signup
+// TEST 4: Privacy Detective (3-Question Evidence Diagnosis)
 // -----------------------------------------------------------------
-console.log("\n--- Test Suite 3: Purpose-Driven Excess Collection (Newsletter) ---");
-const newsletterAudit = auditor.audit(messyHtmlForm, 'newsletter signup');
+console.log("\n--- Battery 4: Evidence-Based Privacy Detective ---");
+const detectiveAudit = auditor.audit('aadhaar_no', 'newsletter signup');
+const aadhaarField = detectiveAudit.fields[0];
 
-// Check that email is needed
-const emailField = newsletterAudit.fields.find(f => f.name === 'user_email');
-assert(emailField && !emailField.isExcess, 'Newsletter: user_email is NOT excess (Needed)');
-
-// Check that mob_no, dob, cust_pin, aadhaar are flagged as EXCESS
-const mobField = newsletterAudit.fields.find(f => f.name === 'mob_no');
-assert(mobField && mobField.isExcess, 'Newsletter: mob_no is flagged as EXCESS');
-
-const dobField = newsletterAudit.fields.find(f => f.name === 'txt_dob');
-assert(dobField && dobField.isExcess, 'Newsletter: txt_dob is flagged as EXCESS');
-
-const aadhaarField = newsletterAudit.fields.find(f => f.id === 'usr_aadhaar_num');
-assert(aadhaarField && aadhaarField.isExcess, 'Newsletter: usr_aadhaar_num is flagged as EXCESS');
-
-const csrfField = newsletterAudit.fields.find(f => f.name === 'csrf_token');
-assert(csrfField && !csrfField.isExcess, 'Newsletter: csrf_token is non-personal (Operational)');
+assert(aadhaarField.whatDetected && aadhaarField.whatDetected.includes('aadhaar_no'), 'Detective answers: What was detected');
+assert(aadhaarField.whyUnnecessary && aadhaarField.whyUnnecessary.includes('purpose limitation'), 'Detective answers: Why it might be unnecessary');
+assert(aadhaarField.recommendedAction && aadhaarField.recommendedAction.length > 0, 'Detective answers: What the owner should do');
+assert(aadhaarField.alternative && aadhaarField.alternative.length > 0, 'Detective provides Minimum Data Alternative');
 
 // -----------------------------------------------------------------
-// TEST 4: Purpose-Driven Excess Collection - E-Commerce Checkout
+// TEST 5: Privacy Surgery (Grouping & Overrides)
 // -----------------------------------------------------------------
-console.log("\n--- Test Suite 4: Purpose-Driven Excess Collection (E-Commerce) ---");
-const ecommerceForm = `name, phone, shipping_address, cust_pin, email, credit_card_no, blood_group, religion`;
-const ecomAudit = auditor.audit(ecommerceForm, 'ecommerce checkout');
-
-const bloodField = ecomAudit.fields.find(f => f.rawIdentifier === 'blood_group');
-assert(bloodField && bloodField.isExcess, 'E-Commerce: blood_group is flagged as EXCESS');
-
-const religionField = ecomAudit.fields.find(f => f.rawIdentifier === 'religion');
-assert(religionField && religionField.isExcess, 'E-Commerce: religion is flagged as EXCESS');
-
-const phoneField = ecomAudit.fields.find(f => f.rawIdentifier === 'phone');
-assert(phoneField && !phoneField.isExcess, 'E-Commerce: phone is legitimately needed');
+console.log("\n--- Battery 5: Privacy Surgery Workspace ---");
+const surgeryTest = auditor.audit('user_email, full_name, mob_no, dob, aadhaar_no', 'newsletter signup');
+assert(surgeryTest.surgery.keep.some(f => f.rawIdentifier === 'user_email'), 'Surgery KEEP group contains user_email');
+assert(surgeryTest.surgery.optional.some(f => f.rawIdentifier === 'full_name'), 'Surgery OPTIONAL group contains full_name');
+assert(surgeryTest.surgery.remove.some(f => f.rawIdentifier === 'dob'), 'Surgery REMOVE group contains dob');
+assert(surgeryTest.counts.total === 5 && surgeryTest.counts.excessive === 3, 'Surgery counts accurately match actual groupings');
 
 // -----------------------------------------------------------------
-// TEST 5: Compliance Score Calculation
+// TEST 6: Consent Studio (Multi-Lingual & Quality Check)
 // -----------------------------------------------------------------
-console.log("\n--- Test Suite 5: Compliance Score & Grade Calculation ---");
-assert(newsletterAudit.compliance.score < 60, `Newsletter with excessive data has low score (Score: ${newsletterAudit.compliance.score})`);
+console.log("\n--- Battery 6: Consent Studio & Quality Checklist ---");
+const consentTest = auditor.audit('user_email, full_name', 'newsletter signup');
+assert(consentTest.consentNotices.en.includes('DRAFT CONSENT NOTICE'), 'English draft consent notice generated');
+assert(consentTest.consentNotices.hi.includes('डिजिटल वैयक्तिक डेटा संरक्षण'), 'Hindi draft consent notice generated with legal terms');
+assert(consentTest.consentNotices.mr.includes('डिजिटल वैयक्तिक डेटा संरक्षण कायदा'), 'Marathi draft consent notice generated with legal terms');
 
-// Clean form test
-const cleanForm = `email`;
-const cleanAudit = auditor.audit(cleanForm, 'newsletter signup');
-assert(cleanAudit.compliance.score >= 90, `Clean form has high score (Score: ${cleanAudit.compliance.score}, Grade: ${cleanAudit.compliance.grade})`);
-
-// -----------------------------------------------------------------
-// TEST 6: Multi-Language Consent Notice Generation (EN, HI, MR)
-// -----------------------------------------------------------------
-console.log("\n--- Test Suite 6: Multi-Language Consent Notices (EN, HI, MR) ---");
-const enNotice = newsletterAudit.consentNotices.en;
-const hiNotice = newsletterAudit.consentNotices.hi;
-const mrNotice = newsletterAudit.consentNotices.mr;
-
-assert(enNotice.includes("DRAFT CONSENT NOTICE") && /Section 5 of DPDP Act/i.test(enNotice), "English notice properly formatted");
-assert(hiNotice.includes("डिजिटल वैयक्तिक डेटा संरक्षण") && hiNotice.includes("सहमति सूचना का प्रारूप"), "Hindi notice properly generated with legal terminology");
-assert(mrNotice.includes("डिजिटल वैयक्तिक डेटा संरक्षण कायदा") && mrNotice.includes("संमती नोटीस मसुदा"), "Marathi notice properly generated with legal terminology");
+const quality = consentTest.noticeQuality;
+assert(quality.some(q => q.id === 'withdrawal' && q.passed), 'Notice quality check verifies consent withdrawal instructions');
+assert(quality.some(q => q.id === 'disclaimer' && q.passed), 'Notice quality check verifies draft review disclaimer');
 
 // -----------------------------------------------------------------
-// TEST 7: Plain Text Export
+// TEST 7: Unknown Fields Handling
 // -----------------------------------------------------------------
-console.log("\n--- Test Suite 7: Plain Text Export Generation ---");
-const exportedText = auditor.exportAsText(newsletterAudit);
-assert(exportedText.includes("FIELD ANALYSIS SUMMARY TABLE") && exportedText.includes("Compliance Score"), "Exported audit report generated successfully");
+console.log("\n--- Battery 7: Unknown Fields are NOT Blindly Non-Personal ---");
+const unknownTest = auditor.audit('x7_data', 'newsletter signup');
+const unknownField = unknownTest.fields[0];
+assert(unknownField.category === 'Unknown / Requiring Review', 'x7_data classified as Unknown category');
+assert(unknownField.assessment === 'Needs review', 'x7_data assessment is "Needs review" (NOT falsely assumed non-personal)');
+assert(unknownField.necessityStatus === 'Unknown — review required', 'x7_data necessity is "Unknown — review required"');
 
-console.log("\n=================================================");
+// -----------------------------------------------------------------
+// TEST 8: Empty & Malformed Input Handling
+// -----------------------------------------------------------------
+console.log("\n--- Battery 8: Empty & Malformed Input Robustness ---");
+assert(auditor.parseInput('').length === 0, 'Empty string returns empty array');
+assert(auditor.parseInput('   ').length === 0, 'Whitespace returns empty array');
+const malformed = auditor.parseInput('<form><input name="test" <input name="unclosed"');
+assert(malformed.length >= 1, 'Malformed unclosed HTML handled safely without crashing');
+
+// -----------------------------------------------------------------
+// TEST 9: Privacy Assurance & Text Report Export
+// -----------------------------------------------------------------
+console.log("\n--- Battery 9: Privacy & Downloadable Text Dossier ---");
+const exportReport = auditor.audit('user_email, mob_no', 'newsletter signup');
+const textDoc = auditor.exportAsText(exportReport);
+assert(textDoc.includes('FORMSENTRY // PRIVACY INVESTIGATION LAB REPORT'), 'Text export contains FormSentry header');
+assert(textDoc.includes('PRIVACY SURGERY: RECOMMENDED MINIMIZED FORM'), 'Text export includes Privacy Surgery breakdown');
+assert(textDoc.includes('DRAFT CONSENT NOTICE'), 'Text export includes draft consent notice');
+
+// -----------------------------------------------------------------
+// TEST 10: Mock Examples Verification
+// -----------------------------------------------------------------
+console.log("\n--- Battery 10: Mock Demonstration Cases Validation ---");
+const exA = auditor.audit(DPDPAuditor.MOCK_EXAMPLES.newsletter.input, 'newsletter signup');
+assert(exA.counts.excessive >= 4, 'Mock Example A (Newsletter) flags excess DOB, Aadhaar, address, and health');
+
+const exB = auditor.audit(DPDPAuditor.MOCK_EXAMPLES.job.input, 'job application');
+assert(exB.surgery.remove.some(f => f.rawIdentifier === 'bank_account'), 'Mock Example B (Job Application) flags premature bank details');
+
+const exC = auditor.audit(DPDPAuditor.MOCK_EXAMPLES.school.input, 'school admission');
+assert(exC.surgery.keep.some(f => f.rawIdentifier === 'student_name'), 'Mock Example C (School) preserves student name with Section 9 parental consent');
+
+console.log("\n==================================================================");
 console.log(`TEST RESULTS: ${passedTests}/${totalTests} PASSED (${Math.round((passedTests/totalTests)*100)}%)`);
-console.log("=================================================");
+console.log("==================================================================");
 
 if (passedTests === totalTests) {
   process.exit(0);
