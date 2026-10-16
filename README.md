@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🛡️ DPDP Form Auditor — Vibe Coding: Swayambhu 2K26
 
 > **A 100% Client-Side Privacy Compliance Engine & Consent Notice Generator**  
@@ -120,3 +121,6 @@ DPDP/
 - [x] **Stretch Goal 2**: Multi-lingual notices in English, Hindi, and Marathi.
 - [x] **Stretch Goal 3**: Download report as TXT or print-ready PDF.
 - [x] Handles messy real-world forms (`mob_no`, `user_phone`, `dob`, `fname`, `cust_pin`, `aadhaar`).
+=======
+# Vibecode_
+>>>>>>> 6d622ddf02c4ec46b0a4a904dd18cff193a19afb

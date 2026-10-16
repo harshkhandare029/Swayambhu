@@ -1,0 +1,936 @@
+
+# MASTER BUILD PROMPT — FORMSENTRY
+## Evidence-Based DPDP Form Auditor + Privacy Surgery
+
+Act as a senior full-stack engineer, privacy-by-design specialist, product designer, and hackathon-winning prototype developer.
+
+Your task is to BUILD, TEST, AND FINISH a complete, functional web application called **FormSentry — DPDP Form Auditor**.
+
+Do not merely describe the implementation, generate a plan, or provide isolated code snippets. Work directly in the current project workspace, inspect existing files first, implement the application, run it if possible, test the core workflows, fix errors, and leave the project in a working state.
+
+The application must be suitable for a time-constrained Indian college hackathon. Prioritize functional correctness, originality, explainability, and a convincing live demonstration over unnecessary complexity.
+
+---
+
+# 1. THE PROBLEM WE ARE SOLVING
+
+Indian websites often collect more personal information than is reasonably necessary for their stated purpose.
+
+For example, a newsletter signup might request:
+- Email address
+- Mobile number
+- Full name
+- Date of birth
+- Aadhaar number
+- Home address
+- Health information
+
+An ordinary newsletter signup can generally work without collecting most of these details.
+
+Build a tool that lets a user paste an HTML form or enter field names, specify the form's purpose, and receive a transparent privacy audit.
+
+The application must answer:
+
+1. What information does this form appear to collect?
+2. Which fields appear necessary, optional, excessive, or uncertain for the stated purpose?
+3. What evidence and reasoning support each finding?
+4. How could the form collect less information?
+5. What consent notice could the form owner use as a draft?
+6. How does the audit change when the stated purpose changes?
+
+The entire analysis must use deterministic, rule-based JavaScript running locally in the browser. Do not use an AI API or remote analysis service.
+
+# 2. TECHNICAL CONSTRAINTS — NON-NEGOTIABLE
+
+Use the following implementation approach:
+
+- HTML5
+- CSS3
+- Vanilla JavaScript
+- Browser-native APIs
+- A single `index.html` is preferred if practical. If the existing project already has a sensible structure, preserve it rather than rebuilding unnecessarily.
+- No backend.
+- No database.
+- No npm dependencies required to run the application.
+- No Node.js server required at runtime.
+- No paid APIs, API keys, external AI services, or local AI models.
+- No analytics, telemetry, remote logging, or automatic uploads.
+- No external service should receive pasted form HTML, field names, purpose text, or generated notices.
+- The application must work when opened directly in a modern browser using `index.html`.
+
+Do not introduce React, a build system, or a large dependency simply to make the project look sophisticated.
+
+Use browser-native `DOMParser` to inspect pasted HTML. Never execute the pasted HTML.
+
+All core features must work independently of external CDN availability. Use a system font stack and native CSS wherever possible.
+
+# 3. PRODUCT IDENTITY AND DESIGN
+
+Product name: **FormSentry**
+
+Tagline: **Collect less. Explain more.**
+
+Supporting description:
+“An evidence-based form privacy auditor that helps you identify unnecessary data collection and design more privacy-conscious forms.”
+
+Design a polished, professional privacy-analysis workspace.
+
+Visual direction:
+- Warm ivory or off-white background.
+- Charcoal or dark neutral text.
+- Muted sage green as the primary accent.
+- Restrained terracotta for warnings.
+- Soft neutral borders and subtle shadows.
+- Clean system typography.
+- Generous spacing and a clear visual hierarchy.
+- Professional tables and readable findings.
+- Responsive design for laptop and mobile screens.
+
+Avoid:
+- Navy-blue-heavy themes.
+- Purple AI gradients.
+- Neon colours.
+- Excessive animations.
+- Glassmorphism.
+- Giant decorative illustrations.
+- Fake analytics dashboards.
+- Excessive rounded cards.
+- Unnecessary visual effects.
+
+The interface should feel like a serious, thoughtfully designed privacy tool rather than an automatically generated AI landing page.
+
+Make the important findings visible immediately. Never sacrifice readability or functionality for appearance.
+
+# 4. MAIN APPLICATION WORKSPACE
+
+Build one main audit workspace with the following sections.
+
+## A. Header
+
+Include:
+- FormSentry branding.
+- A small “Local analysis” indicator.
+- A concise privacy assurance message.
+- A reset action.
+
+The privacy message must accurately state that the application's analysis runs in the browser and the tool does not upload the pasted input.
+
+## B. Form input section
+
+Provide two input modes:
+
+1. Paste HTML
+2. Enter field names
+
+### Paste HTML mode
+
+Provide a multiline editor for HTML containing form elements.
+
+Example input:
+
+<form>
+  <input type="text" name="full_name" autocomplete="name">
+  <input type="email" name="user_email" autocomplete="email">
+  <input type="tel" name="mob_no">
+  <input type="date" name="dob">
+  <input type="text" name="aadhaar_no">
+  <input type="text" name="home_address">
+  <textarea name="health_condition"></textarea>
+  <button type="submit">Subscribe</button>
+</form>
+
+Parse the supplied HTML using DOMParser.
+
+Extract available information from:
+- input elements
+- select elements
+- textarea elements
+- name attributes
+- id attributes
+- type attributes
+- autocomplete attributes
+- placeholder attributes
+- associated label text
+
+Support labels associated through `for` and nested labels.
+
+Handle duplicate fields, missing attributes, malformed HTML, and forms with no recognizable fields gracefully.
+
+Ignore buttons, submit controls, reset controls, hidden CSRF tokens, and other obvious operational fields when calculating the count of user data fields. If an unusual hidden field appears to contain personal information, flag it for review rather than silently ignoring its possible significance.
+
+Never insert pasted HTML directly into the live DOM. Parse it in an isolated document and extract metadata only. Do not use `eval`, `new Function`, or execute scripts from pasted content.
+
+### Field-name mode
+
+Allow users to enter comma-separated or newline-separated field names.
+
+Example:
+
+user_email, mob_no, full_name, dob, aadhaar_no, home_address
+
+Trim whitespace, discard empty entries, handle duplicates sensibly, and preserve the original spelling of every field.
+
+### Purpose selector
+
+Provide common purposes:
+- Newsletter signup
+- Contact or support form
+- Account registration
+- Job application
+- E-commerce checkout
+- Appointment booking
+- School admission
+- Custom purpose
+
+When “Custom purpose” is selected, display a text input.
+
+The purpose is critical: necessity decisions must be based on the purpose, not just on the type of data collected.
+
+### Main actions
+
+Provide:
+- Analyze form
+- Load example
+- Clear input
+
+Disable or validate the analysis action appropriately when required inputs are missing.
+
+Do not generate a fake audit when the input is empty.
+
+# 5. CORE ENGINE — FIELD CLASSIFICATION
+
+Implement a reusable, deterministic analysis engine in JavaScript.
+
+Do not hardcode a separate finished report for every example. Every example, pasted form, and manually entered field list must pass through the same actual analysis pipeline.
+
+Normalize field names for matching while preserving the original field name for display.
+
+Normalization should account for:
+- Uppercase and lowercase.
+- Snake case.
+- Camel case.
+- Hyphens.
+- Spaces.
+- Common abbreviations.
+- Common spelling variants.
+- Relevant HTML metadata and autocomplete values.
+
+For example, recognize these as related patterns where appropriate:
+
+- `mob_no`
+- `mobNo`
+- `mobile`
+- `mobile_number`
+- `phone`
+- `user_phone`
+- `phone_no`
+
+Also recognize:
+
+- `mail`
+- `email`
+- `email_id`
+- `user_email`
+- `contact_email`
+
+- `full_name`
+- `fname`
+- `first_name`
+- `last_name`
+- `customer_name`
+- `applicant_name`
+
+- `dob`
+- `birth_date`
+- `date_of_birth`
+- `birthdate`
+
+- `addr`
+- `address`
+- `home_address`
+- `billing_address`
+
+- `pin`
+- `pincode`
+- `postal_code`
+- `zip_code`
+
+- `aadhaar`
+- `aadhaar_number`
+- `pan`
+- `pan_number`
+
+- `salary`
+- `annual_income`
+- `bank_account`
+- `account_number`
+- `ifsc`
+
+- `medical_history`
+- `diagnosis`
+- `blood_group`
+- `health_condition`
+
+- `lat`
+- `lng`
+- `gps_location`
+- `current_location`
+- `home_location`
+
+- `child_name`
+- `student_dob`
+- `guardian_phone`
+- `parent_email`
+- `minor_age`
+
+- `password`
+- `username`
+- `order_id`
+- `message`
+- `comments`
+- `feedback`
+
+Do not use a naive substring matcher that accidentally classifies unrelated names. Use normalized tokens, aliases, metadata, and explicit matching rules. Make the rules readable and maintainable.
+
+## Classification categories
+
+Support:
+- Identity data
+- Contact data
+- Financial data
+- Health data
+- Location data
+- Children's data
+- Authentication and security data
+- User-generated content
+- Non-personal or operational data
+- Unknown or requiring review
+
+For each field, determine:
+
+1. Original field name.
+2. Normalized field name.
+3. Category.
+4. Whether it appears to be personal data.
+5. Evidence used for the classification.
+6. Confidence or evidence strength.
+7. Explanation.
+8. Whether manual review is needed.
+
+Use appropriate statuses:
+- Likely personal data
+- Likely not personal data
+- Needs review
+
+Do not classify an unknown field as definitely non-personal merely because no keyword matched.
+
+Treat names, contact details, identifiers, and other potentially identifying information carefully. The category labels are heuristic classifications, not legal determinations.
+
+Where a field's meaning is ambiguous, show the ambiguity instead of pretending to know what the field contains.
+
+# 6. INNOVATION A — EVIDENCE-BASED PRIVACY DETECTIVE
+
+This is a core feature, not an optional enhancement.
+
+Every analyzed field must have a finding that answers three questions.
+
+### Question 1: What was detected?
+
+Examples:
+- “The field name `mob_no` matches the mobile-number alias.”
+- “The HTML input uses `type=email` and `autocomplete=email`.”
+- “The field name `medical_history` matches a health-related keyword.”
+
+Show the evidence actually used. Never fabricate evidence.
+
+### Question 2: Why might it be unnecessary?
+
+Compare the field with the selected purpose.
+
+Example:
+
+Field: `aadhaar_no`
+
+Purpose: Newsletter signup
+
+Finding:
+“An Aadhaar identifier appears unrelated to the ordinary delivery of a newsletter. An email address would generally be sufficient for this purpose.”
+
+Another example:
+
+Field: `home_address`
+
+Purpose: Newsletter signup
+
+Finding:
+“A home address is generally not needed to send a digital newsletter. Consider removing it unless a specific, justified requirement exists.”
+
+For uncertain fields, explain what additional context would be needed.
+
+### Question 3: What should the owner do?
+
+Each field should receive a clear recommendation, such as:
+- Keep as required.
+- Make optional.
+- Remove from the form.
+- Review the business justification.
+- Replace with a less intrusive alternative.
+- Confirm what the field is used for.
+
+Make recommendations context-sensitive.
+
+## Evidence panel
+
+When a user opens a finding, show:
+- Original field name.
+- Normalized field name.
+- Matched keyword or alias, if applicable.
+- Relevant HTML metadata, if supplied.
+- Assigned category.
+- Selected purpose.
+- Necessity decision.
+- Reasoning.
+- Recommended action.
+- Confidence or review status.
+
+Do not show fake numerical AI confidence. If numeric confidence is implemented, define a transparent rule-based interpretation and label it as a heuristic. Otherwise, use clear qualitative evidence levels.
+
+## Necessity statuses
+
+Use exactly these core statuses:
+
+1. Likely necessary
+2. Potentially necessary — justification needed
+3. Likely excessive
+4. Unknown — review required
+
+Do not force every field into a definitive yes/no answer.
+
+# 7. PURPOSE-AWARE NECESSITY RULES
+
+Build a transparent rule engine mapping purposes to commonly justified fields.
+
+The following are baseline heuristics, not absolute legal rules.
+
+### Newsletter signup
+
+- Email: generally necessary.
+- Name: optional or purpose-dependent.
+- Mobile number: generally unnecessary unless a separate, explained communication purpose exists.
+- Date of birth: generally excessive without a specific justification.
+- Aadhaar or PAN: generally excessive.
+- Home address: generally excessive for a digital newsletter.
+- Health information: generally excessive.
+- Newsletter preferences: potentially useful, but often optional.
+
+### Contact or support form
+
+- Message or issue description: generally necessary.
+- One usable reply channel, such as email or phone: generally necessary.
+- Name: often optional.
+- Aadhaar, date of birth, bank details, and unrelated health data: generally excessive unless the specific context establishes a genuine need.
+
+### Account registration
+
+- Username and/or email: often necessary.
+- Authentication credentials: potentially necessary, but passwords must never be exposed in audit output or logged.
+- Phone: purpose-dependent.
+- Date of birth, precise location, financial details, and identity numbers: require specific justification.
+
+### Job application
+
+- Applicant name and contact channel: generally relevant.
+- Resume, qualifications, skills, and work experience: generally relevant.
+- Bank account details: usually unnecessary at the initial application stage.
+- PAN or Aadhaar: do not assume they are needed at the application stage.
+- Medical history: generally requires careful scrutiny and a specific justification.
+
+### E-commerce checkout
+
+- Delivery address: relevant when delivering physical goods.
+- Contact details: purpose-dependent and context-sensitive.
+- Payment information: use a reputable payment processor rather than directly collecting unnecessary card or bank credentials.
+- Date of birth and health information: generally unnecessary without a specific justification.
+
+### Appointment booking
+
+- Contact details and appointment information: generally relevant.
+- Health details: context-dependent; only collect what is reasonably needed for the appointment.
+- Aadhaar and unrelated financial data: generally require justification.
+
+### School admission
+
+- Student identity and guardian contact information: may be relevant.
+- Student date of birth: potentially necessary depending on admission requirements.
+- Guardian details and home address: context-dependent.
+- Children's data must be explicitly highlighted for careful review.
+- Do not automatically label every field concerning a child as excessive.
+
+### Custom purpose
+
+Use a conservative heuristic. Match only clearly relevant purpose keywords and fields. For unsupported or ambiguous purposes, explain the uncertainty and ask the user to review the justification.
+
+## Critical rule
+
+The same field can receive different necessity outcomes for different purposes.
+
+When the purpose changes, recalculate the findings from the actual input. Do not merely change the purpose label.
+
+# 8. INNOVATION B — PRIVACY SURGERY
+
+This is the signature differentiator of FormSentry.
+
+Build an interactive comparison between:
+
+**Original form** and **Recommended minimized form**.
+
+The recommended form must be derived from the actual audit results, not a hardcoded example.
+
+## A. Three action groups
+
+Place every analyzed field into one of these groups:
+
+### Keep
+Fields classified as likely necessary for the stated purpose.
+
+### Make optional or review
+Fields that may be useful but need justification, are optional, or have uncertain classification.
+
+### Remove
+Fields classified as likely excessive for the stated purpose.
+
+Never silently delete fields from the user's original input.
+
+Every proposed change must be reversible or easy to inspect.
+
+## B. Before-and-after comparison
+
+Display:
+- Original field count.
+- Number recommended to keep.
+- Number recommended to make optional or review.
+- Number recommended for removal.
+- Proposed remaining field count.
+
+Example:
+
+Original newsletter form: 8 fields
+
+Recommended:
+- Keep: `user_email`
+- Optional: `full_name`, `mob_no`, `newsletter_frequency`
+- Remove: `dob`, `aadhaar_no`, `home_address`, `health_condition`
+
+This is an illustrative example. The actual result must be calculated by the engine.
+
+Clearly distinguish a recommendation from an automatically applied change.
+
+## C. Interactive controls
+
+Provide:
+- Show original fields.
+- Show recommended fields.
+- Show removed fields.
+- Show optional or review fields.
+- Restore a removed field to the proposed form.
+- Mark a field as optional.
+- Inspect the reason for a proposed change.
+- Copy the recommended field list.
+- Reset proposed changes to the engine's recommendations.
+
+These controls must actually work.
+
+If a user overrides a recommendation, preserve the original audit decision and separately show the user's proposed adjustment.
+
+## D. Purpose comparison
+
+Allow the user to change the purpose after an audit and rerun the analysis.
+
+Show a concise change summary:
+- Fields whose necessity decisions changed.
+- Fields whose decisions remained the same.
+- Newly identified excessive fields.
+- Fields requiring additional review.
+
+Example:
+“Changing the purpose from Newsletter signup to School admission changed the review outcome for student date of birth. This is a heuristic recommendation, not a legal determination.”
+
+Implement this only if it can be done without destabilizing the main analysis.
+
+## E. Privacy Surgery must be honest
+
+Never claim that removing a field automatically makes a website compliant.
+
+Explain that the proposed form is a data-minimization recommendation and must be reviewed by the form owner.
+
+# 9. CONSENT NOTICE GENERATOR
+
+Generate an editable consent notice using the actual analysis results and selected purpose.
+
+The notice must contain:
+
+1. What categories of data are proposed to be collected.
+2. The stated purpose.
+3. Which fields are optional, where relevant.
+4. How the person can withdraw consent.
+5. A clearly editable placeholder for the organization's real contact details or withdrawal mechanism.
+6. A clear draft/review disclaimer.
+
+Example structure:
+
+“Draft privacy notice
+
+We propose to collect your email address for the purpose of [purpose]. Any optional information you choose to provide will be used only for the purposes described here.
+
+You may withdraw your consent by [insert the actual withdrawal method and contact details].
+
+Please review this draft to ensure it accurately reflects your organization's actual data practices.”
+
+This is only a structural example. Generate a more specific notice using the actual fields and purpose.
+
+Important:
+- Do not imply that the notice guarantees DPDP Act compliance.
+- Do not invent an organization's retention policy, sharing practices, security guarantees, or withdrawal mechanism.
+- Do not automatically include fields proposed for removal as though they are approved for collection.
+- Clearly distinguish confirmed inputs from placeholders and assumptions.
+- Keep the notice editable.
+- Provide a copy button.
+- If there are no valid analyzed fields, show an appropriate empty state instead of inventing a notice.
+
+# 10. INNOVATION C — ENGLISH, HINDI AND MARATHI
+
+Implement this as a stretch goal only after the parser, classifier, necessity engine, findings, Privacy Surgery, and English notice work correctly.
+
+Provide a language selector:
+- English
+- हिन्दी
+- मराठी
+
+Use local, predefined templates and deterministic interpolation. Do not use an external translation API.
+
+The generated notice should reflect the actual purpose, relevant data categories, optional fields, and withdrawal placeholder.
+
+Requirements:
+- Use natural, understandable language.
+- Ensure Devanagari characters display correctly.
+- Do not simply translate the heading while leaving the notice body in English.
+- Keep the meaning consistent across supported languages.
+- Clearly mark the notice as a draft.
+- If a complete template is unavailable, say so rather than presenting an incomplete translation as complete.
+
+Do not spend excessive time on perfect translation at the expense of the core functionality.
+
+# 11. SUMMARY TABLE AND FILTERS
+
+Build a working results table with the following columns:
+
+- Field name
+- Data category
+- Personal-data assessment
+- Necessity status
+- Evidence or reason
+- Recommended action
+
+Add functioning filters:
+- All fields
+- Personal data
+- Likely excessive
+- Needs review
+- Potentially necessary
+
+Provide a search field if time allows.
+
+Summary indicators should be calculated from the current analysis:
+- Total recognized user-data fields.
+- Likely personal-data fields.
+- Likely excessive fields.
+- Fields requiring review.
+
+Do not use static example numbers.
+
+Keep the table usable on narrow screens.
+
+# 12. OPTIONAL HEURISTIC SCORE
+
+Implement only after all must-haves work.
+
+Call it:
+
+“Data Minimization Score — heuristic”
+
+Score: 0–100.
+
+It must not be presented as an official DPDP compliance score.
+
+Use an understandable scoring model that:
+- Penalizes likely excessive collection.
+- Accounts for the severity of unnecessary sensitive information.
+- Accounts for uncertainty in a transparent way.
+- Avoids treating every field as equally risky.
+- Avoids giving an unjustifiably high score simply because a form contains few fields.
+
+Display the factors that affected the score.
+
+Never claim the score proves legal compliance.
+
+# 13. MOCK CASES — REAL ANALYSIS ONLY
+
+Create three usable example buttons.
+
+Every example must populate the inputs and run through the same real parser, classifier, purpose rules, findings engine, and Privacy Surgery logic.
+
+Do not prefill hardcoded result cards.
+
+## Example A: Newsletter signup
+
+Fields:
+- user_email
+- mob_no
+- full_name
+- dob
+- aadhaar_no
+- home_address
+- health_condition
+- newsletter_frequency
+
+Expected general behavior:
+- Email is generally necessary.
+- Name, mobile, and frequency are optional or purpose-dependent.
+- Date of birth, Aadhaar, home address, and health information are likely excessive without a specific justification.
+
+## Example B: Job application
+
+Fields:
+- applicant_name
+- contact_email
+- mobile_no
+- resume_url
+- years_of_experience
+- birth_date
+- pan_number
+- bank_account
+- medical_history
+
+Expected general behavior:
+- Name, contact, resume, and experience are relevant.
+- Bank details and identity identifiers require careful stage-specific scrutiny.
+- Medical history is not automatically justified at the initial application stage.
+
+## Example C: School admission
+
+Fields:
+- student_name
+- student_dob
+- parent_email
+- guardian_phone
+- home_address
+- blood_group
+- aadhaar_no
+- parent_annual_income
+
+Expected general behavior:
+- Highlight children's data.
+- Apply context-sensitive necessity rules.
+- Do not automatically flag every child-related field as excessive.
+- Explain why some fields require justification.
+
+# 14. PRIVACY AND SECURITY REQUIREMENTS
+
+Treat privacy as a core product feature.
+
+- Process all analysis locally in the browser.
+- Never upload user input.
+- Never use a remote AI API.
+- Never log pasted HTML or field values to the console.
+- Never persist pasted form content in localStorage, sessionStorage, URLs, or browser history.
+- Do not automatically submit the original form.
+- Do not execute scripts or event handlers from pasted HTML.
+- Do not render raw user input as trusted HTML.
+- Use `textContent` or safe DOM construction for user-supplied strings.
+- Escape or safely render all displayed field names and extracted metadata.
+- Keep password values out of reports and logs.
+- Include a Clear All action that removes the current in-memory input and results.
+
+The privacy statement should describe what this application actually does. Do not make unsupported claims about the user's browser, device, or external infrastructure.
+
+# 15. EXPORT AND RESET
+
+Implement a simple text report export using browser-native Blob and object URLs.
+
+The report should include:
+- Purpose.
+- Audit summary.
+- Each field's classification.
+- Necessity decision.
+- Evidence.
+- Explanation.
+- Recommendation.
+- Heuristic score, if implemented.
+- Generated consent notice.
+- Privacy Surgery proposal.
+
+Use a descriptive filename such as `formsentry-audit-report.txt`.
+
+PDF export is optional. If time is limited, prefer a complete text export and a print-friendly stylesheet over adding a PDF dependency.
+
+Ensure Reset and Clear All actually clear relevant state and do not leave stale findings visible.
+
+# 16. TESTING AND ACCEPTANCE CRITERIA
+
+Before finishing, test the following.
+
+### Test 1: Messy field aliases
+
+Input:
+`user_email`, `mob_no`, `mobileNumber`, `user_phone`, `dob`, `aadhaar_no`, `addr`, `health_condition`
+
+Verify:
+- Aliases are recognized.
+- Duplicate or synonymous fields do not cause crashes.
+- Original names remain visible.
+- Classification and necessity are separate decisions.
+
+### Test 2: HTML parsing
+
+Paste a form containing labels, different input types, placeholders, autocomplete attributes, a textarea, a select, and submit buttons.
+
+Verify:
+- User-data fields are extracted.
+- Buttons are ignored in field counts.
+- Evidence comes from the actual metadata.
+- Pasted HTML never executes.
+- Malformed HTML does not crash the application.
+
+### Test 3: Purpose changes
+
+Analyze `student_dob` and `home_address` for a newsletter signup, then change the purpose to school admission.
+
+Verify:
+- The actual necessity analysis is recalculated.
+- Changed decisions are explained.
+- Unchanged decisions are preserved.
+- The proposed minimized form updates accordingly.
+
+### Test 4: Privacy Detective
+
+Open a finding for `aadhaar_no`.
+
+Verify that the interface answers:
+- What was detected?
+- Why might it be unnecessary?
+- What should the owner do?
+
+### Test 5: Privacy Surgery
+
+Verify:
+- Original and recommended field lists are different when appropriate.
+- Keep, optional/review, and remove groups are generated from the analysis.
+- Users can restore a proposed removal.
+- User overrides do not overwrite the original audit finding.
+- Counts update correctly.
+
+### Test 6: Consent notices
+
+Verify:
+- The notice matches the actual purpose and fields.
+- The withdrawal method is an editable placeholder.
+- The draft disclaimer is visible.
+- Copying works.
+- Hindi and Marathi bodies are genuinely localized if implemented.
+
+### Test 7: Unknown fields
+
+Use a field such as `x7_data`.
+
+Verify:
+- It is not confidently declared non-personal.
+- It receives a review status where appropriate.
+- The reason for uncertainty is explained.
+
+### Test 8: Empty and malformed input
+
+Verify:
+- Empty input does not create fake results.
+- Missing purpose is handled appropriately.
+- No-field HTML produces a helpful message.
+- Duplicate fields do not break the application.
+
+### Test 9: Privacy and exports
+
+Verify:
+- The tool works without API keys or a backend.
+- No pasted content is uploaded or persisted.
+- Exported report content matches the actual analysis.
+- Clear All removes stale output.
+
+### Test 10: Responsive UI
+
+Verify:
+- Main actions remain accessible.
+- The findings table remains readable.
+- Long field names do not break the layout.
+- There are no console errors during normal operation.
+
+# 17. EXECUTION STRATEGY
+
+Work in this order:
+
+Priority 1:
+- Inspect the workspace.
+- Build the input interface.
+- Implement safe HTML parsing.
+- Implement normalization and classification.
+- Implement purpose-aware necessity rules.
+
+Priority 2:
+- Evidence-based Privacy Detective.
+- Functional results table and filters.
+- Privacy Surgery.
+- Editable English consent notice.
+
+Priority 3:
+- Mock cases.
+- Purpose comparison.
+- Text report export.
+- Clear All and error handling.
+
+Priority 4:
+- Hindi and Marathi notice templates.
+- Heuristic score.
+- Responsive visual polish.
+
+Do not spend the first half of the task perfecting CSS.
+
+If an existing implementation is present, preserve working functionality and make focused changes. Do not overwrite the project blindly or create unnecessary duplicate files.
+
+If a terminal is available, use it for inspection and testing, but the finished application must not require a server to run.
+
+If time becomes limited, deliver all core must-haves and a functional Privacy Surgery before implementing optional enhancements.
+
+# 18. DEFINITION OF DONE
+
+The project is complete only when:
+
+- The application opens and runs.
+- The user can analyze pasted HTML or a list of field names.
+- Field classifications are evidence-based and rule-driven.
+- Necessity decisions depend on the stated purpose.
+- The main findings explain detection, necessity, and recommended action.
+- Privacy Surgery is interactive and uses actual analysis results.
+- The consent notice is generated from the analyzed data.
+- Example cases use the real engine.
+- No user input is sent to a backend or external AI service.
+- There are no major runtime errors.
+- The application can be demonstrated without manually editing the source code during the demo.
+
+After implementation, provide a concise completion report:
+1. Files created or modified.
+2. Features implemented.
+3. Tests performed and their results.
+4. Known limitations.
+5. Any remaining bugs.
+6. The exact steps to open and demonstrate the application.
+
+Do not claim a test passed unless you actually performed it.
+
+Start by inspecting the current project files and then proceed with implementation. Do not stop after presenting a plan.
